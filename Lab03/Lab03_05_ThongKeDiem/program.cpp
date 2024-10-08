@@ -8,27 +8,18 @@ unsigned short NhapDiem(int stt);
 
 int main(int argc, const char **argv) {
 
-	// Khai báo biến lưu số lượng sinh viên
 	unsigned int n = 0;
 
-	// Nhập giá trị cho biến n
 	cout << endl << "Nhap so luong sinh vien : ";
 	cin >> n;
 
-	// Gọi hàm thống kê
 	ThongKe(n);
 
 	_getch();
 	return 0;
 }
 
-/*
-	Định nghĩa hàm nhập điểm từ bàn phím
-	Input:
-		stt: Số thứ tự của sinh viên
-	Output: 
-		Điểm đưuọc nhập từ bàn phím: thuộc đoạn [0..10]
-*/
+
 unsigned short NhapDiem(int stt) {
 	unsigned short diem = 0;
 	do {
@@ -38,13 +29,7 @@ unsigned short NhapDiem(int stt) {
 	return diem;
 }
 
-/*
-	Định nghĩa hàm thống kê điểm
-	Input:
-		n: số lượng sinh viên
-	Output:
-		Không có. Chỉ xuất kết quả thống kê
-*/
+
 void ThongKe(unsigned int n) {
 	// Khai báo các biến đếm để thống kê theo điểm số
 	int d0 = 0, d1 = 0, d2 = 0, d3 = 0, d4 = 0, d5 = 0,
