@@ -9,7 +9,7 @@ using namespace std;
 void LietKeSoNT(unsigned int n);
 int KiemTra_NT(int n);
 
-int main(int argc, const char **argv) {
+int main() {
 
 	unsigned int n = 0;
 

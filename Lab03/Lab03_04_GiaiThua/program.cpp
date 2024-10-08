@@ -6,7 +6,7 @@ using namespace std;
 int TinhGiaiThua(unsigned int);
 int TinhTong(unsigned int);
 
-int main(int argc, const char **argv) {
+int main() {
 
 	unsigned int n = 0;
 

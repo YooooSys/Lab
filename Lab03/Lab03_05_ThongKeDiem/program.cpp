@@ -6,7 +6,7 @@ using namespace std;
 void ThongKe(unsigned int n);
 unsigned short NhapDiem(int stt);
 
-int main(int argc, const char **argv) {
+int main() {
 
 	unsigned int n = 0;
 
