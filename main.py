@@ -1,6 +1,8 @@
 from customtkinter import *
 from database import *
 from tkinter import *
+from pandas import *
+
 
 collection = get_collection("test_db", "test_collection")
 
@@ -54,8 +56,7 @@ def UpdateRowColors():
         if isinstance(widget, CTkFrame) and 'row' in widget.grid_info():
             row = int(widget.grid_info()['row'])
             if row % 2 == 1:
-                widget.configure(fg_color="teal" if selected_row == row else "transparent")
-                      
+                widget.configure(fg_color="teal" if selected_row == row else "transparent")              
 selected_row = None
 def PrintElement(data, row):
     global selected_row
@@ -210,7 +211,6 @@ def OpenAddDataWindow():
         try:
             collection.insert_one(data)  # Add data to MongoDB
             error_label.configure(text="Dữ liệu đã được thêm!")
-            RefreshTable()  # Refresh the table
         except Exception as e:
             error_label.configure(text=f"Lỗi: {e}")
 
@@ -341,7 +341,6 @@ def OpenDeleteDataWindow(data):
     def DeleteData():
         collection.delete_one(data)
         delete_window.destroy()
-        RefreshTable()
     label = CTkLabel(master=delete_window,text= "Bạn có chắc chắn muốn xóa người này?", anchor="center")
     label.grid(row=1,column=0, pady = 5, padx = 10)
 
@@ -419,6 +418,7 @@ buttons_data = [
     {"image_path": r"template/359657.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)},
     {"image_path": r"template/2740721.png", "command": OpenSortDataWindow, "x": 75, "size": (20, 20)},
     {"image_path": r"template/1235.png", "command": OpenSearchDataWindow, "x": 130, "size": (30, 30)},
+    {"image_path": r"template/refresh.png", "command": RefreshTable, "x": 1800, "size": (30, 30)},
 ]
 
 for button in buttons_data:
