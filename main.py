@@ -2,8 +2,6 @@ from customtkinter import *
 from database import *
 from tkinter import *
 
-
-# Kết nối đến MongoDB và lấy collection
 collection = get_collection("test_db", "test_collection")
 
 # Giao diện CustomTkinter
@@ -13,25 +11,22 @@ app.title("Quản lý sinh viên")
 
 def maximize_window(): 
     app.state('zoomed') 
-# Hoãn việc thay đổi trạng thái của cửa sổ chính trong 1ms -> FIX lỗi maximize
 app.after(1, maximize_window)
 
-# Frame hiển thị bảng dữ liệu
 table_frame = CTkScrollableFrame(master=app)
 table_frame.pack(pady=(80, 20), padx=20, fill="both", expand=True)
 
-# Biến lưu tham chiếu đến cửa sổ con
 add_window = None
 edit_window = None 
 delete_window = None
 sort_window = None
 search_window = None
 
-# Biến lưu trữ cột sắp xếp 
 sort_column = StringVar() 
-sort_column.set("MSSV") # Giá trị mặc định
+sort_column.set("MSSV")
+sort_option = StringVar()
+sort_option.set("Ascending Sort")
 
-# Hàm hiển thị tiêu đề
 def PrintTitle():
     headers = [
         ("MSSV", 1, 100), ("Họ đệm", 2, 180), ("Tên", 3, 80), ("Giới tính", 4, 90), 
@@ -45,12 +40,12 @@ def PrintTitle():
         )
         header.grid(row=0, column=column, padx=1, pady=1, sticky="nsew")
 
-# Hàm hiển thị dữ liệu từ MongoDB
 def SelectRow(row):
     global selected_row
     if selected_row != row:
         selected_row = row
-        UpdateRowColors()  # Update colors based on selection
+        UpdateRowColors()
+
 
 def UpdateRowColors():
     global selected_row
@@ -92,14 +87,11 @@ def PrintElement(data, row):
         label.bind("<Button-1>", lambda e, r=row: SelectRow(r))
         label.bind("<Button-3>", lambda e, r=row: SelectRow(r))
 
-        
-# Hàm hiển thị menu ngữ cảnh
 context_menu = None
 
 def ShowContextMenu(event, data):
     global context_menu
 
-    # Xóa menu cũ nếu tồn tại
     if context_menu is not None:
         context_menu.destroy()
 
@@ -141,7 +133,7 @@ def ShowContextMenu(event, data):
             context_menu = None
     app.bind("<Button-1>", CloseContextMenu)
 
-# Hàm cập nhật lại bảng
+
 def RefreshTable():
     # Xóa các widget hiện tại trong `table_frame` (nếu có)
     for widget in table_frame.winfo_children():
@@ -168,7 +160,6 @@ def RefreshTable():
     except Exception as e:
         print("Error: ", e)
 
-# Hàm mở cửa sổ thêm dữ liệu
 def OpenAddDataWindow():
     global add_window
     if add_window and add_window.winfo_exists():
@@ -185,7 +176,7 @@ def OpenAddDataWindow():
             "mssv": mssv_entry.get(),
             "hodem": hodem_entry.get(),
             "name": name_entry.get(),
-            "gender": gender_entry.get(),  # Thêm dòng này
+            "gender": gender_entry.get(),
             "class": class_entry.get(),
             "birth": birth_entry.get(),
             "email": email_entry.get(),
@@ -360,9 +351,6 @@ def OpenDeleteDataWindow(data):
     cancel_button = CTkButton(master=delete_window, text="Hủy", command=delete_window.destroy)
     cancel_button.grid(row=2, column=1, padx=10, pady=10, sticky="w")
 
-sort_column = StringVar()
-sort_option = StringVar()
-sort_option.set("Ascending Sort")  # Giá trị mặc định
 def OpenSortDataWindow():
     global sort_window
     if sort_window and sort_window.winfo_exists():
@@ -426,10 +414,11 @@ def OpenSearchDataWindow():
     entry.grid(row = 1, column= 0, pady = 5, padx = (20, 5))
 
 
+
 buttons_data = [
-    {"image_path": r"D:\BT\359657.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)},
-    {"image_path": r"D:\BT\2740721.png", "command": OpenSortDataWindow, "x": 75, "size": (20, 20)},
-    {"image_path": r"D:\BT\1235.png", "command": OpenSearchDataWindow, "x": 130, "size": (30, 30)},
+    {"image_path": r"template/359657.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)},
+    {"image_path": r"template/2740721.png", "command": OpenSortDataWindow, "x": 75, "size": (20, 20)},
+    {"image_path": r"template/1235.png", "command": OpenSearchDataWindow, "x": 130, "size": (30, 30)},
 ]
 
 for button in buttons_data:
