@@ -415,9 +415,9 @@ def OpenSearchDataWindow():
 
 
 buttons_data = [
-    {"image_path": r"template/359657.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)},
-    {"image_path": r"template/2740721.png", "command": OpenSortDataWindow, "x": 75, "size": (20, 20)},
-    {"image_path": r"template/1235.png", "command": OpenSearchDataWindow, "x": 130, "size": (30, 30)},
+    {"image_path": r"template/add_student.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)},
+    {"image_path": r"template/sort.png", "command": OpenSortDataWindow, "x": 75, "size": (20, 20)},
+    {"image_path": r"template/search.png", "command": OpenSearchDataWindow, "x": 130, "size": (30, 30)},
     {"image_path": r"template/refresh.png", "command": RefreshTable, "x": 1800, "size": (30, 30)},
 ]
 
