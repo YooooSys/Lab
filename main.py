@@ -1,10 +1,7 @@
 from customtkinter import *
-from database import *
+from database import collection, CheckValidValue
 from tkinter import *
 from pandas import *
-
-
-collection = get_collection("test_db", "test_collection")
 
 # Giao diện CustomTkinter
 app = CTk()
@@ -56,8 +53,9 @@ def UpdateRowColors():
         if isinstance(widget, CTkFrame) and 'row' in widget.grid_info():
             row = int(widget.grid_info()['row'])
             if row % 2 == 1:
-                widget.configure(fg_color="teal" if selected_row == row else "transparent")              
+                widget.configure(fg_color="teal" if selected_row == row else "transparent")
 selected_row = None
+        
 def PrintElement(data, row):
     global selected_row
     fields = [
@@ -163,6 +161,7 @@ def RefreshTable():
 
 def OpenAddDataWindow():
     global add_window
+
     if add_window and add_window.winfo_exists():
         add_window.focus()
         return
@@ -192,21 +191,23 @@ def OpenAddDataWindow():
         if not all(data[key] for key in data if key not in ["debt"]):
             error_label.configure(text="Vui lòng nhập đầy đủ thông tin!")
             return
+        
+        # Check for 
+        tuition = data["tuition"]
+        payed = data["payed"]
+        name = data["name"]
+        second_name = data["hodem"]
+        id = data["mssv"]
+        
+        error_text = CheckValidValue(id, name, second_name, tuition, payed)
 
-        try:
-            # Convert the values to integers
-            tuition = int(data["tuition"])  # Tổng học phí
-            payed = int(data["payed"])  # Học phí đã đóng
-            debt = tuition - payed  # Calculate debt
-            if debt < 0:
-                error_label.configure(text="Tổng học phí không thể bé hơn học phí đã đóng!")
-                return
-        except ValueError:
-            error_label.configure(text="Tổng học phí và học phí đã đóng phải là số!")
+        if error_text != "":
+            error_label.configure(text=error_text)
+            error_text = ""
             return
-
+         
         # Add the calculated `debt` to the data dictionary
-        data["debt"] = debt
+        data["debt"] = int(data["tuition"]) - int(data["payed"])
 
         try:
             collection.insert_one(data)  # Add data to MongoDB
@@ -276,20 +277,21 @@ def OpenEditDataWindow(data):
             error_label.configure(text="Vui lòng nhập đầy đủ thông tin!")
             return
 
-        try:
-            # Convert the values to integers
-            tuition = int(updated_data["tuition"])  # Tổng học phí
-            payed = int(updated_data["payed"])  # Học phí đã đóng
-            debt = tuition - payed  # Calculate debt
-            if debt < 0:
-                error_label.configure(text="Tổng học phí không thể bé hơn học phí đã đóng!")
-                return
-        except ValueError:
-            error_label.configure(text="Tổng học phí và học phí đã đóng phải là số!")
+        tuition = updated_data["tuition"]
+        payed = updated_data["payed"]
+        name = updated_data["name"]
+        second_name = updated_data["hodem"]
+        id = updated_data["mssv"]
+        _id = data["_id"]
+        error_text = CheckValidValue(id, name, second_name, tuition, payed, _id)
+
+        if error_text != "":
+            error_label.configure(text=error_text)
+            error_text = ""
             return
 
         # Add the calculated `debt` to the updated_data dictionary
-        updated_data["debt"] = debt
+        updated_data["debt"] = int(updated_data["tuition"]) - int(updated_data["payed"])
 
         try:
             collection.update_one({"_id": data["_id"]}, {"$set": updated_data})
