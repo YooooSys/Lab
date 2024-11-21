@@ -8,9 +8,9 @@ app = CTk()
 app.geometry("1920x1080")
 app.title("Quản lý sinh viên")
 
-def maximize_window(): 
+def MaximizeWindow() -> None: 
     app.state('zoomed') 
-app.after(1, maximize_window)
+app.after(1, MaximizeWindow)
 
 table_frame = CTkScrollableFrame(master=app)
 table_frame.pack(pady=(80, 20), padx=20, fill="both", expand=True)
@@ -26,8 +26,8 @@ sort_column.set("MSSV")
 sort_option = StringVar()
 sort_option.set("Ascending Sort")
 
-def PrintTitle():
-    headers = [
+def PrintTitle() -> None:
+    headers: list = [
         ("MSSV", 1, 100), ("Họ đệm", 2, 180), ("Tên", 3, 80), ("Giới tính", 4, 90), 
         ("Lớp", 5, 90), ("Ngày sinh", 6, 120), ("Email", 7, 240), ("Số TC đã có", 8, 100), 
         ("Tổng học phí", 9, 180), ("Học phí đã đóng", 10, 180), ("Còn nợ", 11, 180), ("Ghi chú", 12, 290)
@@ -39,14 +39,14 @@ def PrintTitle():
         )
         header.grid(row=0, column=column, padx=1, pady=1, sticky="nsew")
 
-def SelectRow(row):
+def SelectRow(row) -> None:
     global selected_row
     if selected_row != row:
         selected_row = row
         UpdateRowColors()
 
 
-def UpdateRowColors():
+def UpdateRowColors() -> None:
     global selected_row
     for widget in table_frame.winfo_children():
         # Kiểm tra nếu widget là CTkFrame và có thuộc tính 'row'
@@ -56,7 +56,7 @@ def UpdateRowColors():
                 widget.configure(fg_color="teal" if selected_row == row else "transparent")
 selected_row = None
         
-def PrintElement(data, row):
+def PrintElement(data, row) -> None:
     global selected_row
     fields = [
         ("mssv", 1, 100), ("hodem", 2, 180), ("name", 3, 80), ("gender", 4, 90), 
@@ -88,7 +88,7 @@ def PrintElement(data, row):
 
 context_menu = None
 
-def ShowContextMenu(event, data):
+def ShowContextMenu(event, data) -> None:
     global context_menu
 
     if context_menu is not None:
@@ -133,7 +133,7 @@ def ShowContextMenu(event, data):
     app.bind("<Button-1>", CloseContextMenu)
 
 
-def RefreshTable():
+def RefreshTable() -> None:
     # Xóa các widget hiện tại trong `table_frame` (nếu có)
     for widget in table_frame.winfo_children():
         widget.grid_forget()  # Chỉ ẩn các widget thay vì xóa
@@ -159,7 +159,7 @@ def RefreshTable():
     except Exception as e:
         print("Error: ", e)
 
-def OpenAddDataWindow():
+def OpenAddDataWindow() -> None:
     global add_window
 
     if add_window and add_window.winfo_exists():
@@ -193,12 +193,12 @@ def OpenAddDataWindow():
             return
         
         # Check for 
-        tuition = data["tuition"]
-        payed = data["payed"]
-        name = data["name"]
-        second_name = data["hodem"]
-        id = data["mssv"]
-        
+        tuition: str = data["tuition"]
+        payed: str = data["payed"]
+        name: str = data["name"]
+        second_name: str = data["hodem"]
+        id: str = data["mssv"]
+
         error_text = CheckValidValue(id, name, second_name, tuition, payed)
 
         if error_text != "":
@@ -245,7 +245,7 @@ def OpenAddDataWindow():
 
 
 # Hàm mở cửa sổ chỉnh sửa dữ liệu
-def OpenEditDataWindow(data):
+def OpenEditDataWindow(data) -> None:
     global edit_window
     if edit_window and edit_window.winfo_exists():
         edit_window.focus()
@@ -329,7 +329,7 @@ def OpenEditDataWindow(data):
     error_label = CTkLabel(master=edit_window, text="", text_color="red")
     error_label.grid(row=12, column=1, columnspan=2)
 
-def OpenDeleteDataWindow(data):
+def OpenDeleteDataWindow(data) -> None:
     global delete_window
     # Kiểm tra nếu cửa sổ con đã mở thì không tạo thêm
     if delete_window and delete_window.winfo_exists():
@@ -388,7 +388,7 @@ def OpenSortDataWindow():
     sort_option_combobox = CTkComboBox(master=sort_window, values=list(sort_option_display.keys()), variable=sort_option)
     sort_option_combobox.grid(row=2,column=1, pady = 5, padx = 10)
 
-    def SortData():
+    def SortData() -> None:
         sort_column.set(display_value[sort_column.get()])
         RefreshTable()
         sort_window.destroy()
@@ -399,7 +399,7 @@ def OpenSortDataWindow():
     cancel_button = CTkButton(master=sort_window, text="Hủy", command=sort_window.destroy)
     cancel_button.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
-def OpenSearchDataWindow():
+def OpenSearchDataWindow() -> None:
     global search_window
     if search_window and search_window.winfo_exists():
         search_window.focus()

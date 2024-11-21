@@ -8,9 +8,10 @@ def get_collection(database_name, collection_name):
     collection = db[collection_name]  # Truy cập collection
     return collection
 
-def check_student_id(collection, para: dict, _id) -> bool:
+def CheckValidStudentId(collection, para: dict, _id) -> bool:
     
-    students = collection.find(para, {"_id": 1})
+    students = collection.find(para)
+
     for student in students:
         if _id == None:
             return False
@@ -22,13 +23,13 @@ def check_student_id(collection, para: dict, _id) -> bool:
 
 def CheckValidValue(id: str, name: str, second_name: str, tuition: str, payed: str, _id=None) -> str:
     
-    MAX_NAME = 7
-    MAX_SECOND_NAME = 20
+    MAX_NAME: int = 7
+    MAX_SECOND_NAME: int = 20
 
     if id.isnumeric() != True:
         return "MSSV không hợp lệ!"
     
-    if not check_student_id(collection, {"mssv": id}, _id):
+    if not CheckValidStudentId(collection, {"mssv": id}, _id):
         return "MSSV đã tồn tại!"
 
     if len(name) > MAX_NAME:
