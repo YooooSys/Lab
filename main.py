@@ -1,5 +1,5 @@
 from customtkinter import *
-from database import collection, CheckValidValue
+from database import collection, CheckValidValue, get_collection
 from tkinter import *
 from pandas import *
 
@@ -133,24 +133,14 @@ def ShowContextMenu(event, data) -> None:
     app.bind("<Button-1>", CloseContextMenu)
 
 
-def RefreshTable() -> None:
+def RefreshTable(documents=list(collection.find())) -> None:
     # Xóa các widget hiện tại trong `table_frame` (nếu có)
     for widget in table_frame.winfo_children():
         widget.grid_forget()  # Chỉ ẩn các widget thay vì xóa
     PrintTitle()
 
     try:
-        documents = list(collection.find())  # Lấy dữ liệu từ collection
-        sort_by = sort_column.get()  # Tên cột sắp xếp
-        reverse_sort = sort_option.get() == "Descending Sort"  # Kiểm tra kiểu sắp xếp
         
-        if sort_by:
-            int_columns = ["tuition", "debt", "payed"]
-            if sort_by in int_columns:
-                documents.sort(key=lambda x: int(x.get(sort_by, 0)), reverse=reverse_sort)
-            else:
-                documents.sort(key=lambda x: str(x.get(sort_by, "")), reverse=reverse_sort)
-
         # Hiển thị dữ liệu lên giao diện
         for idx, document in enumerate(documents):
             PrintElement(document, idx * 2 + 1)  # Hiển thị dòng dữ liệu
@@ -296,10 +286,12 @@ def OpenEditDataWindow(data) -> None:
         try:
             collection.update_one({"_id": data["_id"]}, {"$set": updated_data})
             error_label.configure(text="Dữ liệu đã được cập nhật!")
-            RefreshTable()
+
+            document = list(collection.find())
+            RefreshTable(document)
         except Exception as e:
             error_label.configure(text=f"Lỗi: {e}")
-
+    
     def CreateEntry(label_text, initial_value, row, column):
         label = CTkLabel(master=edit_window, text=label_text)
         label.grid(row=row, column=column, padx=(20, 5), pady=5)
@@ -342,6 +334,7 @@ def OpenDeleteDataWindow(data) -> None:
     delete_window.attributes('-topmost', True)
     def DeleteData():
         collection.delete_one(data)
+
         delete_window.destroy()
     label = CTkLabel(master=delete_window,text= "Bạn có chắc chắn muốn xóa người này?", anchor="center")
     label.grid(row=1,column=0, pady = 5, padx = 10)
@@ -377,8 +370,8 @@ def OpenSortDataWindow():
         "Ghi chú": "note"
         }
     sort_option_display = {
-        "Ascending Sort": False,
-        "Descending Sort": True
+        "Ascending Sort": 1,
+        "Descending Sort": -1
     }
     label = CTkLabel(master=sort_window,text="Chọn thuộc tính cần sắp xếp")
     label.grid(row=1,column=0, pady = 5, padx = 10)
@@ -388,12 +381,12 @@ def OpenSortDataWindow():
     sort_option_combobox = CTkComboBox(master=sort_window, values=list(sort_option_display.keys()), variable=sort_option)
     sort_option_combobox.grid(row=2,column=1, pady = 5, padx = 10)
 
-    def SortData() -> None:
-        sort_column.set(display_value[sort_column.get()])
-        RefreshTable()
+    def sort_database() -> None:
+        document = collection.find().sort({display_value[sort_column.get()]: sort_option_display[sort_option.get()]})
+        RefreshTable(document)
         sort_window.destroy()
 
-    confirm_button = CTkButton(master=sort_window, text="OK", command=SortData)
+    confirm_button = CTkButton(master=sort_window, text="OK", command=sort_database)
     confirm_button.grid(row=3, column=0, padx=10, pady=10, sticky="e") 
 
     cancel_button = CTkButton(master=sort_window, text="Hủy", command=sort_window.destroy)
@@ -420,7 +413,7 @@ buttons_data = [
     {"image_path": r"template/add_student.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)},
     {"image_path": r"template/sort.png", "command": OpenSortDataWindow, "x": 75, "size": (20, 20)},
     {"image_path": r"template/search.png", "command": OpenSearchDataWindow, "x": 130, "size": (30, 30)},
-    {"image_path": r"template/refresh.png", "command": RefreshTable, "x": 1800, "size": (30, 30)},
+    {"image_path": r"template/refresh.png", "command": lambda: RefreshTable(documents=list(collection.find())), "x": 185, "size": (30, 30)},
 ]
 
 for button in buttons_data:
