@@ -1,7 +1,6 @@
 from customtkinter import *
 from database import collection, CheckValidValue
 from tkinter import *
-from pandas import *
 
 # Giao diện CustomTkinter
 app = CTk()

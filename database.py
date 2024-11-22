@@ -50,5 +50,4 @@ def CheckValidValue(id: str, name: str, second_name: str, tuition: str, payed: s
     
     return ""
 
-
 collection = get_collection("test_db", "test_collection")
