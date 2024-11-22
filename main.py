@@ -1,5 +1,5 @@
 from customtkinter import *
-from database import collection, CheckValidValue, get_collection
+from database import collection, CheckValidValue, DataCorrector
 from tkinter import *
 
 # Giao diện CustomTkinter
@@ -186,9 +186,10 @@ def OpenAddDataWindow() -> None:
         payed: str = data["payed"]
         name: str = data["name"]
         second_name: str = data["hodem"]
+        email: str = data["email"]
         id: str = data["mssv"]
 
-        error_text = CheckValidValue(id, name, second_name, tuition, payed)
+        error_text = CheckValidValue(id, name, second_name, email, tuition, payed)
 
         if error_text != "":
             error_label.configure(text=error_text)
@@ -197,7 +198,8 @@ def OpenAddDataWindow() -> None:
          
         # Add the calculated `debt` to the data dictionary
         data["debt"] = int(data["tuition"]) - int(data["payed"])
-        data["mssv"] = int(data["mssv"])
+
+        DataCorrector(data)
 
         try:
             collection.insert_one(data)  # Add data to MongoDB
@@ -271,9 +273,10 @@ def OpenEditDataWindow(data) -> None:
         payed = updated_data["payed"]
         name = updated_data["name"]
         second_name = updated_data["hodem"]
+        email: str = updated_data["email"]
         id = updated_data["mssv"]
         _id = data["_id"]
-        error_text = CheckValidValue(id, name, second_name, tuition, payed, _id)
+        error_text = CheckValidValue(id, name, second_name, email, tuition, payed, _id)
 
         if error_text != "":
             error_label.configure(text=error_text)
@@ -282,7 +285,7 @@ def OpenEditDataWindow(data) -> None:
 
         # Add the calculated `debt` to the updated_data dictionary
         updated_data["debt"] = int(updated_data["tuition"]) - int(updated_data["payed"])
-        updated_data["mssv"] = int(updated_data["mssv"])
+        DataCorrector(updated_data)
         try:
             collection.update_one({"_id": data["_id"]}, {"$set": updated_data})
             error_label.configure(text="Dữ liệu đã được cập nhật!")
@@ -291,7 +294,8 @@ def OpenEditDataWindow(data) -> None:
             RefreshTable(document)
         except Exception as e:
             error_label.configure(text=f"Lỗi: {e}")
-    
+        
+
     def CreateEntry(label_text, initial_value, row, column):
         label = CTkLabel(master=edit_window, text=label_text)
         label.grid(row=row, column=column, padx=(20, 5), pady=5)
