@@ -26,9 +26,9 @@ def CheckValidValue(id: str, name: str, second_name: str, tuition: str, payed: s
     MAX_NAME: int = 7
     MAX_SECOND_NAME: int = 20
 
-    if id.isnumeric() != True:
+    if id.isnumeric() != True or int(id) < 0 or len(id) != 7:
         return "MSSV không hợp lệ!"
-    
+
     if not CheckValidStudentId(collection, {"mssv": id}, _id):
         return "MSSV đã tồn tại!"
 
