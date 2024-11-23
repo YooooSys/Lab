@@ -1,9 +1,11 @@
 from customtkinter import *
-from database import collection, log_collection, CheckValidValue, DataCorrector, Log, CopyDataFieldNo_ID
+import customtkinter
+from database import collection, log_collection, ValueValidality, DataCorrector, Log, CopyDataFieldNo_ID, Search
 from tkinter import *
 import time
 
 # Giao diện CustomTkinter
+customtkinter.set_appearance_mode("dark")
 app = CTk()
 app.geometry("1920x1080")
 app.title("Quản lý sinh viên")
@@ -198,6 +200,7 @@ def OpenAddDataWindow() -> None:
 
 
         # Check if any field (except `debt`) is empty
+        
         if not all(data[key] for key in data if key not in ["debt"]):
             error_label.configure(text="Vui lòng nhập đầy đủ thông tin!")
             return
@@ -208,9 +211,10 @@ def OpenAddDataWindow() -> None:
         name: str = data["name"]
         second_name: str = data["hodem"]
         email: str = data["email"]
+        owned_cert: str = data["owned_cert"]
         id: str = data["mssv"]
 
-        error_text = CheckValidValue(id, name, second_name, email, tuition, payed)
+        error_text = ValueValidality(id, name, second_name, email, owned_cert, tuition, payed)
 
         if error_text != "":
             error_label.configure(text=error_text)
@@ -301,10 +305,11 @@ def OpenEditDataWindow(data) -> None:
         name = updated_data["name"]
         second_name = updated_data["hodem"]
         email: str = updated_data["email"]
+        owned_cert: str = updated_data["owned_cert"]
         id = updated_data["mssv"]
         _id = data["_id"]
 
-        error_text = CheckValidValue(id, name, second_name, email, tuition, payed, _id)
+        error_text = ValueValidality(id, name, second_name, email, owned_cert, tuition, payed, _id)
 
         if error_text != "":
             error_label.configure(text=error_text)
@@ -437,7 +442,7 @@ def OpenSortDataWindow():
     cancel_button = CTkButton(master=sort_window, text="Hủy", command=sort_window.destroy)
     cancel_button.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
-search_result = []
+search_result=[]
 def OpenSearchDataWindow() -> None:
     global search_window
     if search_window and search_window.winfo_exists():
@@ -470,72 +475,13 @@ def OpenSearchDataWindow() -> None:
     collection.create_index([("$**", "text")])
 
     # Hàm tìm kiếm dữ liệu
+
     def SearchData(event=None):
-        temp = entry.get()
-        fields = [
-            "mssv", "hodem", "name", "gender", 
-            "class", "birth", "email", "owned_cert", 
-            "tuition", "payed", "debt", "note"
-        ]
-        
-        # Lấy giá trị của các checkbox
-        match_case_value = match_case.get()
-        match_whole_word_value = match_whole_word.get()
+        search_data = Search(entry, match_case, match_whole_word)
+        pipeline, temp, fields = search_data[0], search_data[1], search_data[2]
 
-        # Điều kiện tìm kiếm dựa trên các tùy chọn
-        if not match_case_value and not match_whole_word_value:
-            conditions = {
-                "$or": [
-                    {field: {"$regex": temp, "$options": "i"}} for field in fields
-                ]
-            }
-        elif match_case_value and not match_whole_word_value:
-            conditions = {
-                "$or": [
-                    {field: {"$regex": temp}} for field in fields
-                ]
-            }
-        elif not match_case_value and match_whole_word_value:
-            # Sử dụng regex để tìm từ đầy đủ
-            conditions = {
-                "$or": [
-                    {field: {"$regex": r"\b" + temp + r"\b", "$options": "i"}} for field in fields
-                ]
-            }
-        else:
-            conditions = {
-                "$or": [
-                    {field: {"$regex": r"\b" + temp + r"\b"}} for field in fields
-                ]
-            }
-
-        # Pipeline tìm kiếm
-        pipeline = [
-            # Chuyển đổi các trường số thành chuỗi
-            {
-                "$addFields": {
-                    "mssv": {"$toString": "$mssv"},
-                    "tuition": {"$toString": "$tuition"},
-                    "payed": {"$toString": "$payed"},
-                    "debt": {"$toString": "$debt"},
-                }
-            },
-            # Thực hiện tìm kiếm
-            {"$match": conditions},
-            # Khôi phục các trường về kiểu số
-            {
-                "$addFields": {
-                    "mssv": {"$toInt": "$mssv"},
-                    "tuition": {"$toInt": "$tuition"},
-                    "payed": {"$toInt": "$payed"},
-                    "debt": {"$toInt": "$debt"},
-                }
-            }
-        ]
-        
-        # Thực hiện tìm kiếm qua pipeline
         documents = list(collection.aggregate(pipeline))
-        
+
         global search_result
         search_result = []
         if len(temp) != 0:
@@ -546,14 +492,14 @@ def OpenSearchDataWindow() -> None:
                     if temp.lower() in value.lower():
                         ftemp.append(field)
                 search_result.append(ftemp)
-        
+
         RefreshTable(documents)
 
     # Gắn sự kiện tìm kiếm khi người dùng gõ vào ô nhập
     entry.bind("<KeyRelease>", SearchData)
 
     # Gắn sự kiện để tìm kiếm khi thay đổi giá trị checkbox
-    def UpdateSearch(event=None):
+    def UpdateSearch():
         SearchData()
 
     # Khi thay đổi giá trị của checkbox
