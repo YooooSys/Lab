@@ -1,4 +1,5 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
+import datetime
 import certifi
 import re
 def get_collection(database_name, collection_name):
@@ -8,20 +9,17 @@ def get_collection(database_name, collection_name):
     collection = db[collection_name]  # Truy cập collection
     return collection
 
-def CheckValidStudentId(collection, para: dict, _id) -> bool:
+def CheckValidStudentId(collection, para: dict, _id) -> bool: # return False when a student with "mssv" value already exist 
     
     students = collection.find(para)
 
     for student in students:
-        if _id == None:
+        if _id == None or student["_id"] != _id:
             return False
-        
-        elif student["_id"] != _id:
-            return False
-        
+
     return True
 
-def CheckValidValue(id: str, name: str, second_name: str, email: str, tuition: str, payed: str, _id=None) -> str:
+def CheckValidValue(id: str, name: str, second_name: str, email: str, tuition: str, payed: str, _id=None) -> str: 
     
     MAX_NAME: int = 7
     MAX_SECOND_NAME: int = 20
@@ -39,6 +37,10 @@ def CheckValidValue(id: str, name: str, second_name: str, email: str, tuition: s
     if len(second_name) > MAX_SECOND_NAME:
         return "Họ đệm không được dài quá 20 kí tự!"
     
+    for char in second_name:
+        if char in SPECIAL_CHAR and char != " ":
+            return "Họ đệm không hợp lệ"
+        
     for char in name:
         if char in SPECIAL_CHAR:
             return "Tên không hợp lệ"
@@ -63,8 +65,27 @@ def DataCorrector(data):
     data["mssv"] = int(data["mssv"])
     name = data["name"]
     hodem = data["hodem"]
-    data["name"] = name[0].upper() + name[1:].lower()
+
+    data["name"] = name.title()
 
     data["hodem"] = " ".join(x.title() for x in hodem.split())
 
+    data["tuition"] = int(data["tuition"])
+
 collection = get_collection("test_db", "test_collection")
+log_collection = get_collection("test_db", "_log")
+
+
+def Log(_id: object ,msg: str, type: str, new_data: dict={}, old_data: dict={}, auth: str=None):
+    entry = {}
+    entry['timestamp'] = datetime.datetime.now()
+    entry["id"] = _id
+    entry['msg'] = msg
+    entry["type"] = type
+
+    if type == "data_change":
+        entry["new"] = new_data
+        entry["old"] = old_data
+
+    entry["auth"] = auth
+    log_collection.insert_one(entry)

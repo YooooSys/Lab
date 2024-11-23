@@ -1,6 +1,7 @@
 from customtkinter import *
-from database import collection, CheckValidValue, DataCorrector
+from database import collection, log_collection, CheckValidValue, DataCorrector, Log
 from tkinter import *
+import time
 
 # Giao diện CustomTkinter
 app = CTk()
@@ -204,7 +205,12 @@ def OpenAddDataWindow() -> None:
         try:
             collection.insert_one(data)  # Add data to MongoDB
             error_label.configure(text="Dữ liệu đã được thêm!")
+            Log(_id=data["_id"], msg="Thêm sinh viên mới", type="data_change", new_data=data)
+
+            time.sleep(1)
+            add_window.destroy
         except Exception as e:
+            Log(_id=data["_id"], msg=e, type="error")
             error_label.configure(text=f"Lỗi: {e}")
 
     def CreateEntry(label_text, row, column):
@@ -234,7 +240,6 @@ def OpenAddDataWindow() -> None:
 
     error_label = CTkLabel(master=add_window, text="", text_color="red")
     error_label.grid(row=12, column=1, padx=0, pady=0)
-
 
 # Hàm mở cửa sổ chỉnh sửa dữ liệu
 def OpenEditDataWindow(data) -> None:
@@ -276,6 +281,7 @@ def OpenEditDataWindow(data) -> None:
         email: str = updated_data["email"]
         id = updated_data["mssv"]
         _id = data["_id"]
+
         error_text = CheckValidValue(id, name, second_name, email, tuition, payed, _id)
 
         if error_text != "":
@@ -286,15 +292,25 @@ def OpenEditDataWindow(data) -> None:
         # Add the calculated `debt` to the updated_data dictionary
         updated_data["debt"] = int(updated_data["tuition"]) - int(updated_data["payed"])
         DataCorrector(updated_data)
-        try:
-            collection.update_one({"_id": data["_id"]}, {"$set": updated_data})
-            error_label.configure(text="Dữ liệu đã được cập nhật!")
 
-            document = list(collection.find())
-            RefreshTable(document)
-        except Exception as e:
-            error_label.configure(text=f"Lỗi: {e}")
-        
+        old_data = {}
+        for key, value in data.items():
+            if key != "_id":
+                old_data[key] = value
+
+        if old_data != updated_data:
+            try:
+                collection.update_one({"_id": data["_id"]}, {"$set": updated_data})
+                error_label.configure(text="Dữ liệu đã được cập nhật!")
+                Log(_id=data["_id"], msg="Cập nhật dữ liệu sinh viên", type="data_change", new_data=updated_data, old_data=old_data)
+                
+                document = list(collection.find())
+                RefreshTable(document)
+
+                time.sleep(1)
+                edit_window.destroy()
+            except Exception as e:
+                Log(_id=data["_id"], msg=e, type="error")
 
     def CreateEntry(label_text, initial_value, row, column):
         label = CTkLabel(master=edit_window, text=label_text)
@@ -410,8 +426,6 @@ def OpenSearchDataWindow() -> None:
     label.grid(row = 0, column= 0, pady = 5, padx = 10)
     entry = CTkEntry(master=search_window, width= 240)
     entry.grid(row = 1, column= 0, pady = 5, padx = (20, 5))
-
-
 
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)},
