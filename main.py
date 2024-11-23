@@ -31,6 +31,8 @@ sort_column = StringVar()
 sort_column.set("MSSV")
 sort_option = StringVar()
 sort_option.set("Ascending Sort")
+gender_=StringVar()
+gender_.set("Nam")
 
 def PrintTitle() -> None:
     headers: list = [
@@ -299,7 +301,7 @@ def OpenEditDataWindow(data) -> None:
             "mssv": mssv_entry.get(),
             "hodem": hodem_entry.get(),
             "name": name_entry.get(),
-            "gender": gender_entry.get(),
+            "gender": gender_display[gender_.get()],
             "class": class_entry.get(),
             "birth": birth_entry.get(),
             "email": email_entry.get(),
@@ -309,7 +311,7 @@ def OpenEditDataWindow(data) -> None:
             "note": note_entry.get(),
         }
 
-
+    
         # Check if any field (except `debt`) is empty
         if not all(updated_data[key] for key in updated_data if key not in ["debt","note"]):
             error_label.configure(text="Vui lòng nhập đầy đủ thông tin!")
@@ -358,11 +360,16 @@ def OpenEditDataWindow(data) -> None:
         entry.insert(0, initial_value)
         entry.grid(row=row, column=column + 1, padx=5, pady=5)
         return entry
+    
+    gender_display = {
+        "Nam": "Nam",
+        "Nữ": "Nữ"
+    }
 
+    # Lấy dữ liệu người dùng
     mssv_entry = CreateEntry("MSSV:", data.get("mssv", ""), 0, 0)
     hodem_entry = CreateEntry("Họ đệm:", data.get("hodem", ""), 1, 0)
     name_entry = CreateEntry("Tên:", data.get("name", ""), 2, 0)
-    gender_entry = CreateEntry("Giới tính:", data.get("gender", ""), 3, 0)
     class_entry = CreateEntry("Lớp:", data.get("class", ""), 4, 0)
     birth_entry = CreateEntry("Ngày sinh:", data.get("birth", ""), 5, 0)
     email_entry = CreateEntry("Email:", data.get("email", ""), 0, 2)
@@ -371,6 +378,13 @@ def OpenEditDataWindow(data) -> None:
     payed_entry = CreateEntry("Học phí đã đóng:", data.get("payed", ""), 3, 2)
     note_entry = CreateEntry("Ghi chú:", data.get("note", ""), 4, 2)
 
+    label = CTkLabel(master=edit_window,text="Giới tính:")
+    label.grid(row=3,column=0, pady = 5, padx = 5)
+
+    gender_combobox = CTkComboBox(master=edit_window, values=list(gender_display.keys()), variable=gender_)
+    gender_combobox.grid(row=3,column=1)
+
+    # Nút chức năng
     update_button = CTkButton(master=edit_window, text="Cập nhật", command=UpdateData)
     update_button.grid(row=11, column=1, padx=20, pady=10)
 
