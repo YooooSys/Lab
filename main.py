@@ -6,6 +6,7 @@ import time
 # Giao diện CustomTkinter
 app = CTk()
 app.geometry("1920x1080")
+app._set_appearance_mode("dark")
 app.title("Quản lý sinh viên")
 
 def MaximizeWindow() -> None: 
@@ -13,6 +14,7 @@ def MaximizeWindow() -> None:
 app.after(1, MaximizeWindow)
 
 table_frame = CTkScrollableFrame(master=app)
+table_frame._set_appearance_mode("dark")
 table_frame.pack(pady=(80, 20), padx=20, fill="both", expand=True)
 
 add_window = None
@@ -56,21 +58,23 @@ def UpdateRowColors() -> None:
                 widget.configure(fg_color="teal" if selected_row == row else "transparent")
 selected_row = None
         
-def PrintElement(data, row) -> None:
+def PrintElement(data, row, highlight_list) -> None:
     global selected_row
     fields = [
         ("mssv", 1, 100), ("hodem", 2, 180), ("name", 3, 80), ("gender", 4, 90), 
         ("class", 5, 90), ("birth", 6, 120), ("email", 7, 240), ("owned_cert", 8, 100), 
         ("tuition", 9, 180), ("payed", 10, 180), ("debt", 11, 180), ("note", 12, 290)
     ]
-    
     for field, column, width in fields:
         label_text = str(data.get(field, ""))
         if field in ["tuition", "payed", "debt"]:
             label_text += " VNĐ"
-        
+
         frame_bg = "teal" if selected_row == row else "transparent"
-        row_frame = CTkFrame(master=table_frame, width=width, height=30, fg_color=frame_bg)
+        if field in highlight_list:
+            row_frame = CTkFrame(master=table_frame, width=width, height=30, fg_color="#FA8072")
+        else:
+            row_frame = CTkFrame(master=table_frame, width=width, height=30, fg_color=frame_bg)
         #Căn chỉnh frame nền row được chọn không bị thừa ở 2 bên
         if field == "mssv":  
             row_frame.grid(row=row, column=column, padx=(2,1), pady=1, sticky="ew")
@@ -155,12 +159,13 @@ def RefreshTable(documents=None) -> None:
     for widget in table_frame.winfo_children():
         widget.grid_forget()  # Chỉ ẩn các widget thay vì xóa
     PrintTitle()
-
     try:
-        
         # Hiển thị dữ liệu lên giao diện
         for idx, document in enumerate(documents):
-            PrintElement(document, idx * 2 + 1)  # Hiển thị dòng dữ liệu
+            if len(search_result) == 0:
+                PrintElement(document, idx * 2 + 1, [])  # Hiển thị dòng dữ liệu
+            else:
+                PrintElement(document, idx * 2 + 1, search_result[idx])
             separator = CTkFrame(master=table_frame, fg_color="#cccccc", height=2)
             separator.grid(row=idx * 2 + 2, column=0, columnspan=13, sticky="ew", padx=3, pady=0)
     except Exception as e:
@@ -434,20 +439,131 @@ def OpenSortDataWindow():
     cancel_button = CTkButton(master=sort_window, text="Hủy", command=sort_window.destroy)
     cancel_button.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
+search_result = []
 def OpenSearchDataWindow() -> None:
     global search_window
     if search_window and search_window.winfo_exists():
         search_window.focus()
         return
+
+    # Tạo cửa sổ tìm kiếm
     search_window = CTkToplevel(app)
     search_window.title("Tìm kiếm")
-    search_window.geometry("350x130+660+400")
+    search_window.geometry("550x130+660+400")
     search_window.attributes('-topmost', True)
 
-    label = CTkLabel(master=search_window,text="Nhập từ khóa cần tìm:")
-    label.grid(row = 0, column= 0, pady = 5, padx = 10)
-    entry = CTkEntry(master=search_window, width= 240)
-    entry.grid(row = 1, column= 0, pady = 5, padx = (20, 5))
+    # Label và Entry cho từ khóa
+    label = CTkLabel(master=search_window, text="Nhập từ khóa cần tìm:")
+    label.grid(row=0, column=0, pady=5, padx=10)
+
+    entry = CTkEntry(master=search_window, width=240)
+    entry.grid(row=1, column=0, pady=5, padx=(20, 5))
+
+    # Các checkbox tùy chọn tìm kiếm
+    match_case = BooleanVar()
+    match_case_check = CTkCheckBox(master=search_window, text="Match Case", variable=match_case)
+    match_case_check.grid(row=1, column=1, pady=5, padx=(20, 5))
+
+    match_whole_word = BooleanVar()
+    match_whole_word_check = CTkCheckBox(master=search_window, text="Match Whole Word", variable=match_whole_word)
+    match_whole_word_check.grid(row=1, column=2, pady=5, padx=5)
+
+    # Tạo chỉ mục văn bản toàn bộ (chỉ cần làm một lần duy nhất)
+    collection.create_index([("$**", "text")])
+
+    # Hàm tìm kiếm dữ liệu
+    def SearchData(event=None):
+        temp = entry.get()
+        fields = [
+            "mssv", "hodem", "name", "gender", 
+            "class", "birth", "email", "owned_cert", 
+            "tuition", "payed", "debt", "note"
+        ]
+        
+        # Lấy giá trị của các checkbox
+        match_case_value = match_case.get()
+        match_whole_word_value = match_whole_word.get()
+
+        # Điều kiện tìm kiếm dựa trên các tùy chọn
+        if not match_case_value and not match_whole_word_value:
+            conditions = {
+                "$or": [
+                    {field: {"$regex": temp, "$options": "i"}} for field in fields
+                ]
+            }
+        elif match_case_value and not match_whole_word_value:
+            conditions = {
+                "$or": [
+                    {field: {"$regex": temp}} for field in fields
+                ]
+            }
+        elif not match_case_value and match_whole_word_value:
+            # Sử dụng regex để tìm từ đầy đủ
+            conditions = {
+                "$or": [
+                    {field: {"$regex": r"\b" + temp + r"\b", "$options": "i"}} for field in fields
+                ]
+            }
+        else:
+            conditions = {
+                "$or": [
+                    {field: {"$regex": r"\b" + temp + r"\b"}} for field in fields
+                ]
+            }
+
+        # Pipeline tìm kiếm
+        pipeline = [
+            # Chuyển đổi các trường số thành chuỗi
+            {
+                "$addFields": {
+                    "mssv": {"$toString": "$mssv"},
+                    "tuition": {"$toString": "$tuition"},
+                    "payed": {"$toString": "$payed"},
+                    "debt": {"$toString": "$debt"},
+                }
+            },
+            # Thực hiện tìm kiếm
+            {"$match": conditions},
+            # Khôi phục các trường về kiểu số
+            {
+                "$addFields": {
+                    "mssv": {"$toInt": "$mssv"},
+                    "tuition": {"$toInt": "$tuition"},
+                    "payed": {"$toInt": "$payed"},
+                    "debt": {"$toInt": "$debt"},
+                }
+            }
+        ]
+        
+        # Thực hiện tìm kiếm qua pipeline
+        documents = list(collection.aggregate(pipeline))
+        
+        global search_result
+        search_result = []
+        if len(temp) != 0:
+            for doc in documents:
+                ftemp = []
+                for field in fields:
+                    value = str(doc.get(field, ""))
+                    if temp.lower() in value.lower():
+                        ftemp.append(field)
+                search_result.append(ftemp)
+        
+        RefreshTable(documents)
+
+    # Gắn sự kiện tìm kiếm khi người dùng gõ vào ô nhập
+    entry.bind("<KeyRelease>", SearchData)
+
+    # Gắn sự kiện để tìm kiếm khi thay đổi giá trị checkbox
+    def UpdateSearch(event=None):
+        SearchData()
+
+    # Khi thay đổi giá trị của checkbox
+    match_case_check.configure(command=UpdateSearch)
+    match_whole_word_check.configure(command=UpdateSearch)
+
+    # Thực hiện tìm kiếm ngay khi mở cửa sổ
+    SearchData()
 
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)},
