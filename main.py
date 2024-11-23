@@ -2,7 +2,7 @@ from customtkinter import *
 import customtkinter
 from database import collection, log_collection, ValueValidality, DataCorrector, Log, CopyDataFieldNo_ID, Search
 from tkinter import *
-import time
+import threading
 
 # Giao diện CustomTkinter
 customtkinter.set_appearance_mode("dark")
@@ -200,8 +200,7 @@ def OpenAddDataWindow() -> None:
 
 
         # Check if any field (except `debt`) is empty
-        
-        if not all(data[key] for key in data if key not in ["debt"]):
+        if not all(data[key] for key in data if key not in ["debt","note"]):
             error_label.configure(text="Vui lòng nhập đầy đủ thông tin!")
             return
         
@@ -213,6 +212,7 @@ def OpenAddDataWindow() -> None:
         email: str = data["email"]
         owned_cert: str = data["owned_cert"]
         id: str = data["mssv"]
+        owned_cert: str = data["owned_cert"]
 
         error_text = ValueValidality(id, name, second_name, email, owned_cert, tuition, payed)
 
@@ -296,7 +296,7 @@ def OpenEditDataWindow(data) -> None:
 
 
         # Check if any field (except `debt`) is empty
-        if not all(updated_data[key] for key in updated_data if key not in ["debt"]):
+        if not all(updated_data[key] for key in updated_data if key not in ["debt","note"]):
             error_label.configure(text="Vui lòng nhập đầy đủ thông tin!")
             return
 
@@ -308,6 +308,7 @@ def OpenEditDataWindow(data) -> None:
         owned_cert: str = updated_data["owned_cert"]
         id = updated_data["mssv"]
         _id = data["_id"]
+        owned_cert: str = data["owned_cert"]
 
         error_text = ValueValidality(id, name, second_name, email, owned_cert, tuition, payed, _id)
 
@@ -492,7 +493,6 @@ def OpenSearchDataWindow() -> None:
                     if temp.lower() in value.lower():
                         ftemp.append(field)
                 search_result.append(ftemp)
-
         RefreshTable(documents)
 
     # Gắn sự kiện tìm kiếm khi người dùng gõ vào ô nhập
