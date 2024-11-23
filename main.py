@@ -206,7 +206,7 @@ def OpenAddDataWindow() -> None:
             "mssv": mssv_entry.get(),
             "hodem": hodem_entry.get(),
             "name": name_entry.get(),
-            "gender": gender_entry.get(),
+            "gender": gender_display[gender_.get()],
             "class": class_entry.get(),
             "birth": birth_entry.get(),
             "email": email_entry.get(),
@@ -246,11 +246,9 @@ def OpenAddDataWindow() -> None:
         try:
             collection.insert_one(data)  # Add data to MongoDB
             Log(_id=data["_id"], msg="Thêm sinh viên mới", type="data_change", new_data=data) # Write Log
-
-            time.sleep(0.5)
-            Notificate("Dữ liệu đã được thêm ✅") #Show notificate box
             add_window.destroy()
-            RefreshTable()
+
+            Notificate("Dữ liệu đã được thêm ✅") #Show notificate box
 
         except Exception as e:
             Log(_id=data["_id"], msg=e, type="error")
@@ -266,7 +264,6 @@ def OpenAddDataWindow() -> None:
     mssv_entry = CreateEntry("MSSV:", 0, 0)
     hodem_entry = CreateEntry("Họ đệm:", 1, 0)
     name_entry = CreateEntry("Tên:", 2, 0)
-    gender_entry = CreateEntry("Giới tính:", 3, 0)
     class_entry = CreateEntry("Lớp:", 4, 0)
     birth_entry = CreateEntry("Ngày sinh:", 5, 0)
     email_entry = CreateEntry("Email:", 0, 2)
@@ -274,6 +271,18 @@ def OpenAddDataWindow() -> None:
     tuition_entry = CreateEntry("Tổng học phí:", 2, 2)
     payed_entry = CreateEntry("Học phí đã đóng:", 3, 2)
     note_entry = CreateEntry("Ghi chú:", 4, 2)
+
+    gender_display = {
+        "Nam": "Nam",
+        "Nữ": "Nữ"
+    }
+
+    label = CTkLabel(master=add_window,text="Giới tính:")
+    label.grid(row=3,column=0, pady = 5, padx = 5)
+
+    gender_combobox = CTkComboBox(master=add_window, values=list(gender_display.keys()), variable=gender_)
+    gender_combobox.grid(row=3,column=1)
+
 
     add_button = CTkButton(master=add_window, text="Thêm", command=AddData)
     add_button.grid(row=11, column=1, padx=20, pady=10)
@@ -381,7 +390,7 @@ def OpenEditDataWindow(data) -> None:
     label = CTkLabel(master=edit_window,text="Giới tính:")
     label.grid(row=3,column=0, pady = 5, padx = 5)
 
-    gender_combobox = CTkComboBox(master=edit_window, values=list(gender_display.keys()), variable=gender_)
+    gender_combobox = CTkComboBox(master=edit_window, values=list(gender_display.keys()), variable=data["gender"])
     gender_combobox.grid(row=3,column=1)
 
     # Nút chức năng
@@ -412,7 +421,6 @@ def OpenDeleteDataWindow(data) -> None:
         collection.delete_one(data)
         delete_window.destroy()
 
-        RefreshTable()
         Notificate("Xóa dữ liệu thành công ✅")
 
     label = CTkLabel(master=delete_window,text= "Bạn có chắc chắn muốn xóa người này?", anchor="center")
