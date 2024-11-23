@@ -1,7 +1,7 @@
 from customtkinter import *
 from database import collection, log_collection, CheckValidValue, DataCorrector, Log, CopyDataFieldNo_ID
 from tkinter import *
-import time
+import threading
 
 # Giao diện CustomTkinter
 app = CTk()
@@ -198,7 +198,7 @@ def OpenAddDataWindow() -> None:
 
 
         # Check if any field (except `debt`) is empty
-        if not all(data[key] for key in data if key not in ["debt"]):
+        if not all(data[key] for key in data if key not in ["debt","note"]):
             error_label.configure(text="Vui lòng nhập đầy đủ thông tin!")
             return
         
@@ -209,8 +209,9 @@ def OpenAddDataWindow() -> None:
         second_name: str = data["hodem"]
         email: str = data["email"]
         id: str = data["mssv"]
+        owned_cert: str = data["owned_cert"]
 
-        error_text = CheckValidValue(id, name, second_name, email, tuition, payed)
+        error_text = CheckValidValue(id, name, second_name, email, tuition, owned_cert, payed)
 
         if error_text != "":
             error_label.configure(text=error_text)
@@ -292,7 +293,7 @@ def OpenEditDataWindow(data) -> None:
 
 
         # Check if any field (except `debt`) is empty
-        if not all(updated_data[key] for key in updated_data if key not in ["debt"]):
+        if not all(updated_data[key] for key in updated_data if key not in ["debt","note"]):
             error_label.configure(text="Vui lòng nhập đầy đủ thông tin!")
             return
 
@@ -303,8 +304,9 @@ def OpenEditDataWindow(data) -> None:
         email: str = updated_data["email"]
         id = updated_data["mssv"]
         _id = data["_id"]
+        owned_cert: str = data["owned_cert"]
 
-        error_text = CheckValidValue(id, name, second_name, email, tuition, payed, _id)
+        error_text = CheckValidValue(id, name, second_name, email, tuition, owned_cert, payed)
 
         if error_text != "":
             error_label.configure(text=error_text)
@@ -471,7 +473,7 @@ def OpenSearchDataWindow() -> None:
 
     # Hàm tìm kiếm dữ liệu
     def SearchData(event=None):
-        temp = entry.get()
+        temp = entry.get().strip()
         fields = [
             "mssv", "hodem", "name", "gender", 
             "class", "birth", "email", "owned_cert", 
@@ -509,9 +511,7 @@ def OpenSearchDataWindow() -> None:
                 ]
             }
 
-        # Pipeline tìm kiếm
         pipeline = [
-            # Chuyển đổi các trường số thành chuỗi
             {
                 "$addFields": {
                     "mssv": {"$toString": "$mssv"},
@@ -532,7 +532,6 @@ def OpenSearchDataWindow() -> None:
                 }
             }
         ]
-        
         # Thực hiện tìm kiếm qua pipeline
         documents = list(collection.aggregate(pipeline))
         
@@ -546,7 +545,6 @@ def OpenSearchDataWindow() -> None:
                     if temp.lower() in value.lower():
                         ftemp.append(field)
                 search_result.append(ftemp)
-        
         RefreshTable(documents)
 
     # Gắn sự kiện tìm kiếm khi người dùng gõ vào ô nhập
