@@ -6,7 +6,6 @@ import time
 # Giao diện CustomTkinter
 app = CTk()
 app.geometry("1920x1080")
-app._set_appearance_mode("dark")
 app.title("Quản lý sinh viên")
 
 def MaximizeWindow() -> None: 
@@ -14,7 +13,6 @@ def MaximizeWindow() -> None:
 app.after(1, MaximizeWindow)
 
 table_frame = CTkScrollableFrame(master=app)
-table_frame._set_appearance_mode("dark")
 table_frame.pack(pady=(80, 20), padx=20, fill="both", expand=True)
 
 add_window = None
