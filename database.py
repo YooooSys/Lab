@@ -26,11 +26,11 @@ def CopyDataFieldNo_ID(field: dict):
             newfield[key] = value
     return newfield
 
-def CheckValidValue(id: str, name: str, second_name: str, email: str, tuition: str, payed: str, _id=None) -> str: 
+def CheckValidValue(id: str, name: str, second_name: str, email: str, tuition: str, owned_cert: str, payed: str, _id=None) -> str: 
     
     MAX_NAME: int = 7
     MAX_SECOND_NAME: int = 20
-    SPECIAL_CHAR: str = r"-+={}@_!#$%^&*()<>?/\|$}{~:[] "
+    SPECIAL_CHAR: str = r"-+={}@_!#$%^&*()<>?/\|$}{~:[] 0123456789"
     
     if id.isnumeric() != True or int(id) < 0 or len(id) != 7:
         return "MSSV không hợp lệ!"
@@ -54,6 +54,9 @@ def CheckValidValue(id: str, name: str, second_name: str, email: str, tuition: s
     
     if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
         return "Email không hợp lệ"
+    
+    if owned_cert.isnumeric() != True:
+        return "Số tín chỉ không hợp lệ"
     
     try:
     # Convert the values to integers
@@ -79,6 +82,7 @@ def DataCorrector(data):
 
     data["tuition"] = int(data["tuition"])
 
+    data["owned_cert"] = int()
 collection = get_collection("test_db", "test_collection")
 
 
