@@ -137,9 +137,10 @@ def RefreshTable(documents=list(collection.find())) -> None:
     for widget in table_frame.winfo_children():
         widget.grid_forget()  # Chỉ ẩn các widget thay vì xóa
     PrintTitle()
-
+    # for i, select in enumerate(search_result):
+    #     cell_frame = CTkFrame(master=table_frame, height=30, fg_color="yellow")
+    #     cell_frame.grid(row=search_result[i][0]*2-1,column=search_result[i][1]+1)
     try:
-        
         # Hiển thị dữ liệu lên giao diện
         for idx, document in enumerate(documents):
             PrintElement(document, idx * 2 + 1)  # Hiển thị dòng dữ liệu
@@ -396,22 +397,74 @@ def OpenSortDataWindow():
     cancel_button = CTkButton(master=sort_window, text="Hủy", command=sort_window.destroy)
     cancel_button.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
+search_result = []
 def OpenSearchDataWindow() -> None:
     global search_window
     if search_window and search_window.winfo_exists():
         search_window.focus()
         return
+    
     search_window = CTkToplevel(app)
     search_window.title("Tìm kiếm")
     search_window.geometry("350x130+660+400")
     search_window.attributes('-topmost', True)
 
-    label = CTkLabel(master=search_window,text="Nhập từ khóa cần tìm:")
-    label.grid(row = 0, column= 0, pady = 5, padx = 10)
-    entry = CTkEntry(master=search_window, width= 240)
-    entry.grid(row = 1, column= 0, pady = 5, padx = (20, 5))
+    label = CTkLabel(master=search_window, text="Nhập từ khóa cần tìm:")
+    label.grid(row=0, column=0, pady=5, padx=10)
 
+    entry = CTkEntry(master=search_window, width=240)
+    entry.grid(row=1, column=0, pady=5, padx=(20, 5))
 
+    # Tạo chỉ mục văn bản toàn bộ một lần duy nhất (không tạo lại mỗi lần tìm kiếm)
+    collection.create_index([("$**", "text")])
+
+    def SearchData(event):
+        temp = entry.get()
+        fields = [
+            "mssv", "hodem", "name", "gender", 
+            "class", "birth", "email", "owned_cert", 
+            "tuition", "payed", "debt", "note"
+        ]
+        # Điều kiện tìm kiếm chuỗi
+        conditions = {
+            "$or": [
+                {field: {"$regex": temp, "$options": "i"}} for field in fields
+            ]
+        }
+
+        pipeline = [
+            # Chuyển đổi các trường số thành chuỗi
+            {
+                "$addFields": {
+                    "mssv": {"$toString": "$mssv"},
+                    "tuition": {"$toString": "$tuition"},
+                    "payed": {"$toString": "$payed"},
+                    "debt": {"$toString": "$debt"},
+                }
+            },
+            # Thực hiện tìm kiếm
+            {"$match": conditions},
+            # Khôi phục các trường về kiểu số
+            {
+                "$addFields": {
+                    "mssv": {"$toInt": "$mssv"},
+                    "tuition": {"$toInt": "$tuition"},
+                    "payed": {"$toInt": "$payed"},
+                    "debt": {"$toInt": "$debt"},
+                }
+            }
+        ]
+        # Thực hiện tìm kiếm qua pipeline
+        documents = collection.aggregate(pipeline)
+        # global search_result
+        # search_result = []
+        # for idx, doc in enumerate(documents):
+        #     for i, field in enumerate(fields):
+        #         value = str(doc.get(field, ""))
+        #         if temp.lower() in value.lower():
+        #             search_result.append([idx,i])
+        RefreshTable(documents)
+    entry.bind("<KeyRelease>", SearchData)
 
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)},
