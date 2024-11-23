@@ -19,6 +19,13 @@ def CheckValidStudentId(collection, para: dict, _id) -> bool: # return False whe
 
     return True
 
+def CopyDataFieldNo_ID(field: dict):
+    newfield = {}
+    for key, value in field.items():
+        if key != "_id":
+            newfield[key] = value
+    return newfield
+
 def CheckValidValue(id: str, name: str, second_name: str, email: str, tuition: str, payed: str, _id=None) -> str: 
     
     MAX_NAME: int = 7
@@ -73,7 +80,6 @@ def DataCorrector(data):
     data["tuition"] = int(data["tuition"])
 
 collection = get_collection("test_db", "test_collection")
-log_collection = get_collection("test_db", "_log")
 
 
 def Log(_id: object ,msg: str, type: str, new_data: dict={}, old_data: dict={}, auth: str=None):
@@ -89,3 +95,6 @@ def Log(_id: object ,msg: str, type: str, new_data: dict={}, old_data: dict={}, 
 
     entry["auth"] = auth
     log_collection.insert_one(entry)
+
+log_collection = get_collection("test_db", "_log")
+

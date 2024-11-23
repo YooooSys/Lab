@@ -1,5 +1,5 @@
 from customtkinter import *
-from database import collection, log_collection, CheckValidValue, DataCorrector, Log
+from database import collection, log_collection, CheckValidValue, DataCorrector, Log, CopyDataFieldNo_ID
 from tkinter import *
 import time
 
@@ -86,6 +86,21 @@ def PrintElement(data, row) -> None:
         label.bind("<Button-1>", lambda e, r=row: SelectRow(r))
         label.bind("<Button-3>", lambda e, r=row: SelectRow(r))
 
+notificate_msg = None
+
+def Notificate(msg: str) -> None:
+    global notificate_msg
+
+    # Tạo menu tùy chỉnh
+    notificate_msg = CTkFrame(app, corner_radius=8, fg_color="#333333")
+    notificate_msg.place(x=800, y=900)
+
+    label = CTkLabel(master=notificate_msg, text=msg, text_color="white")
+    label.grid(padx=(20, 20), pady=5)
+
+    notificate_msg.after(3000, notificate_msg.destroy)
+
+
 context_menu = None
 
 def ShowContextMenu(event, data) -> None:
@@ -133,7 +148,9 @@ def ShowContextMenu(event, data) -> None:
     app.bind("<Button-1>", CloseContextMenu)
 
 
-def RefreshTable(documents=list(collection.find())) -> None:
+def RefreshTable(documents=None) -> None:
+    if documents == None:
+        documents = list(collection.find())
     # Xóa các widget hiện tại trong `table_frame` (nếu có)
     for widget in table_frame.winfo_children():
         widget.grid_forget()  # Chỉ ẩn các widget thay vì xóa
@@ -204,11 +221,13 @@ def OpenAddDataWindow() -> None:
 
         try:
             collection.insert_one(data)  # Add data to MongoDB
-            error_label.configure(text="Dữ liệu đã được thêm!")
-            Log(_id=data["_id"], msg="Thêm sinh viên mới", type="data_change", new_data=data)
+            Log(_id=data["_id"], msg="Thêm sinh viên mới", type="data_change", new_data=data) # Write Log
 
-            time.sleep(1)
-            add_window.destroy
+            time.sleep(0.5)
+            Notificate("Dữ liệu đã được thêm ✅") #Show notificate box
+            add_window.destroy()
+            RefreshTable()
+
         except Exception as e:
             Log(_id=data["_id"], msg=e, type="error")
             error_label.configure(text=f"Lỗi: {e}")
@@ -293,22 +312,19 @@ def OpenEditDataWindow(data) -> None:
         updated_data["debt"] = int(updated_data["tuition"]) - int(updated_data["payed"])
         DataCorrector(updated_data)
 
-        old_data = {}
-        for key, value in data.items():
-            if key != "_id":
-                old_data[key] = value
+        old_data = CopyDataFieldNo_ID(data)
 
         if old_data != updated_data:
             try:
                 collection.update_one({"_id": data["_id"]}, {"$set": updated_data})
-                error_label.configure(text="Dữ liệu đã được cập nhật!")
                 Log(_id=data["_id"], msg="Cập nhật dữ liệu sinh viên", type="data_change", new_data=updated_data, old_data=old_data)
                 
                 document = list(collection.find())
                 RefreshTable(document)
 
-                time.sleep(1)
+                Notificate("Dữ liệu đã được cập nhật ✅")
                 edit_window.destroy()
+
             except Exception as e:
                 Log(_id=data["_id"], msg=e, type="error")
 
@@ -352,10 +368,16 @@ def OpenDeleteDataWindow(data) -> None:
     delete_window.title("Xóa dữ liệu")
     delete_window.geometry("400x100+660+400")
     delete_window.attributes('-topmost', True)
-    def DeleteData():
-        collection.delete_one(data)
 
+    old_data = CopyDataFieldNo_ID(data)
+    def DeleteData():
+        Log(_id=data["_id"], msg="Xóa dữ liệu", type="data_change", old_data=old_data)
+        collection.delete_one(data)
         delete_window.destroy()
+
+        RefreshTable()
+        Notificate("Xóa dữ liệu thành công ✅")
+
     label = CTkLabel(master=delete_window,text= "Bạn có chắc chắn muốn xóa người này?", anchor="center")
     label.grid(row=1,column=0, pady = 5, padx = 10)
 
