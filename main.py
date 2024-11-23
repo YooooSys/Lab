@@ -12,10 +12,14 @@ app.title("Quản lý sinh viên")
 
 def MaximizeWindow() -> None: 
     app.state('zoomed') 
+
+app.minsize(1300, 500)
 app.after(1, MaximizeWindow)
 
+# Table of content
 table_frame = CTkScrollableFrame(master=app)
-table_frame.pack(pady=(80, 20), padx=20, fill="both", expand=True)
+table_frame.pack(expand=True, pady=(80, 20), padx=20, fill="both")
+
 
 add_window = None
 edit_window = None 
@@ -97,7 +101,7 @@ def Notificate(msg: str) -> None:
 
     # Tạo menu tùy chỉnh
     notificate_msg = CTkFrame(app, corner_radius=8, fg_color="#333333")
-    notificate_msg.place(x=800, y=900)
+    notificate_msg.place(x=app.winfo_width() / 2 - 100, y=app.winfo_height() - 100)
 
     label = CTkLabel(master=notificate_msg, text=msg, text_color="white")
     label.grid(padx=(20, 20), pady=5)
@@ -115,7 +119,19 @@ def ShowContextMenu(event, data) -> None:
 
     # Tạo menu tùy chỉnh
     context_menu = CTkFrame(app, corner_radius=8, fg_color="#333333")
-    context_menu.place(x=event.x_root, y=event.y_root)
+
+    x = event.x_root - app.winfo_x()
+    y = event.y_root - app.winfo_y()
+
+    width_limit = app.winfo_x() + app.winfo_width()
+    height_limit = app.winfo_y() + app.winfo_height()
+
+    if event.x_root > width_limit - 120:
+        x = app.winfo_width() - 120
+    if event.y_root > height_limit - 80:
+        y = app.winfo_height() - 80
+
+    context_menu.place(x=x, y=y)
 
     # Nút Chỉnh sửa
     edit_button = CTkButton(
@@ -212,7 +228,6 @@ def OpenAddDataWindow() -> None:
         email: str = data["email"]
         owned_cert: str = data["owned_cert"]
         id: str = data["mssv"]
-        owned_cert: str = data["owned_cert"]
 
         error_text = ValueValidality(id, name, second_name, email, owned_cert, tuition, payed)
 
@@ -308,7 +323,6 @@ def OpenEditDataWindow(data) -> None:
         owned_cert: str = updated_data["owned_cert"]
         id = updated_data["mssv"]
         _id = data["_id"]
-        owned_cert: str = data["owned_cert"]
 
         error_text = ValueValidality(id, name, second_name, email, owned_cert, tuition, payed, _id)
 

@@ -120,7 +120,9 @@ def ValueValidality(id: str, name: str, second_name: str, email: str, owned_cert
     if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
         return "Email không hợp lệ"
     
-    if not(owned_cert.isnumeric()):
+    try:
+        owned_cert = int(owned_cert)
+    except ValueError:
         return "Số tín chỉ không hợp lệ"
     
     try:
