@@ -404,7 +404,8 @@ def EditDataWindow(data) -> None:
 
             except Exception as e:
                 Log(_id=data["_id"], msg=e, type="error")
-
+        else:
+            error_label.configure(text="")
     def CreateEntry(label_text, initial_value, row, column):
         label = CTkLabel(master=edit_window, text=label_text, text_color=text_color)
         label.grid(row=row, column=column, padx=(20, 5), pady=5)
@@ -592,7 +593,7 @@ def SearchDataWindow() -> None:
     def ResetSearchResult():
         global search_result
         search_result = []
-        
+
     # Khi thay đổi giá trị của checkbox
     match_case_check.configure(command=UpdateSearch)
     match_whole_word_check.configure(command=UpdateSearch)

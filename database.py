@@ -148,6 +148,7 @@ def DataCorrector(data) -> None:
 
     data["tuition"] = int(data["tuition"])
 
+    data["payed"] = int(data["payed"])
     data["owned_cert"] = int(data["owned_cert"])
 collection = get_collection("test_db", "test_collection")
 
