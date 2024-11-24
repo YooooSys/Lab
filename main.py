@@ -113,8 +113,6 @@ def PrintElement(data, row, highlight_list) -> None:
         label.bind("<Button-1>", lambda e, r=row: SelectRow(r))
         label.bind("<Button-3>", lambda e, r=row: SelectRow(r))
 
-notificate_msg = None
-
 def RefreshTable(documents=None) -> None:
     if documents == None:
         documents = list(collection.find())
@@ -132,22 +130,31 @@ def RefreshTable(documents=None) -> None:
     except Exception as e:
         print("Error: ", e)
 
-notificate_msg_height = 0
+notificate_queue = 0
+notificate_msg = [None] * 10
 
 def Notificate(msg: str) -> None:
-    global notificate_msg
+    global notificate_msg, notificate_queue
 
-    notificate_msg = CTkFrame(app, fg_color=lighter_grey_, corner_radius=8)
+    pos = notificate_queue
+    notificate_msg[notificate_queue] = CTkFrame(app, fg_color=lighter_grey_, corner_radius=8,)
 
-    label = CTkLabel(master=notificate_msg, text=msg, text_color=text_color)
+    label = CTkLabel(master=notificate_msg[notificate_queue], text=msg, text_color=text_color, anchor="center")
     label.grid(padx=10, pady=10)
 
     x = app.winfo_width() / 2 - 100
     y = app.winfo_height() - 100
 
 
-    notificate_msg.place(x=x, y=y)
-    notificate_msg.after(3000, notificate_msg.destroy)
+    notificate_msg[notificate_queue].place(x=x, y=y - 60 * notificate_queue)
+    notificate_queue += 1
+
+    def DestroyNotificate():
+        global notificate_queue
+        notificate_msg[pos].destroy()
+        notificate_queue -= 1
+
+    app.after(3000, lambda: DestroyNotificate())
 
 
 context_menu = None
