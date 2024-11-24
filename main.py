@@ -281,7 +281,7 @@ def OpenAddDataWindow() -> None:
     label.grid(row=3,column=0, pady = 5, padx = 5)
 
     gender_combobox = CTkComboBox(master=add_window, values=list(gender_display.keys()), variable=gender_)
-    gender_combobox.grid(row=3,column=1)
+    gender_combobox.grid(row=3,column=1,)
 
 
     add_button = CTkButton(master=add_window, text="Thêm", command=AddData)
@@ -480,6 +480,7 @@ def OpenSortDataWindow():
     cancel_button.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
 search_result=[]
+debounce_id = None
 def OpenSearchDataWindow() -> None:
     global search_window
     if search_window and search_window.winfo_exists():
@@ -530,9 +531,14 @@ def OpenSearchDataWindow() -> None:
                         ftemp.append(field)
                 search_result.append(ftemp)
         RefreshTable(documents)
+    def SearchDataDebounced(event=None):
+        global debounce_id
+        if debounce_id is not None:
+            app.after_cancel(debounce_id)
+        debounce_id = app.after(400, SearchData)
 
     # Gắn sự kiện tìm kiếm khi người dùng gõ vào ô nhập
-    entry.bind("<KeyRelease>", SearchData)
+    entry.bind("<KeyRelease>", SearchDataDebounced)
 
     # Gắn sự kiện để tìm kiếm khi thay đổi giá trị checkbox
     def UpdateSearch():
@@ -541,9 +547,6 @@ def OpenSearchDataWindow() -> None:
     # Khi thay đổi giá trị của checkbox
     match_case_check.configure(command=UpdateSearch)
     match_whole_word_check.configure(command=UpdateSearch)
-
-    # Thực hiện tìm kiếm ngay khi mở cửa sổ
-    SearchData()
 
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)},
