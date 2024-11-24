@@ -137,7 +137,7 @@ def ValueValidality(id: str, name: str, second_name: str, email: str, owned_cert
     
     return ""
 
-def DataCorrector(data):
+def DataCorrector(data) -> None:
     data["mssv"] = int(data["mssv"])
     name = data["name"]
     hodem = data["hodem"]

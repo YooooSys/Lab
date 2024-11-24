@@ -115,79 +115,6 @@ def PrintElement(data, row, highlight_list) -> None:
 
 notificate_msg = None
 
-def Notificate(msg: str) -> None:
-    global notificate_msg
-
-    # Tạo menu tùy chỉnh
-    notificate_msg = CTkFrame(app, fg_color=lighter_grey_, corner_radius=8)
-    notificate_msg.place(x=app.winfo_width() / 2 - 100, y=app.winfo_height() - 100)
-
-    label = CTkLabel(master=notificate_msg, text=msg, text_color=text_color)
-    label.grid(padx=(20, 20), pady=5)
-
-    notificate_msg.after(3000, notificate_msg.destroy)
-
-
-context_menu = None
-
-def ShowContextMenu(event, data) -> None:
-    global context_menu
-
-    if context_menu is not None:
-        context_menu.destroy()
-
-    # Tạo menu tùy chỉnh
-    context_menu = CTkFrame(app, corner_radius=8, fg_color=lighter_grey_)
-
-    # Lấy vị trí
-    x = event.x_root - app.winfo_x()
-    y = event.y_root - app.winfo_y()
-
-    width_limit = app.winfo_x() + app.winfo_width()
-    height_limit = app.winfo_y() + app.winfo_height()
-
-    if event.x_root > width_limit - 120:
-        x = app.winfo_width() - 120
-    if event.y_root > height_limit - 80:
-        y = app.winfo_height() - 80
-
-    context_menu.place(x=x, y=y)
-
-    # Nút Chỉnh sửa
-    edit_button = CTkButton(
-        master=context_menu,
-        text="Chỉnh sửa",
-        command=lambda: [OpenEditDataWindow(data), context_menu.destroy()],
-        fg_color="transparent",
-        hover_color=grey_,
-        text_color=text_color,
-        corner_radius=8,
-        width=100
-    )
-    edit_button.pack(padx=10, pady=5)
-
-    # Nút Xóa
-    delete_button = CTkButton(
-        master=context_menu,
-        text="Xóa",
-        command=lambda: [OpenDeleteDataWindow(data), context_menu.destroy()],
-        fg_color="transparent",
-        hover_color=grey_,
-        text_color=text_color,
-        corner_radius=8,
-        width=100
-    )
-    delete_button.pack(padx=10, pady=(0,5))
-
-    # Hàm đóng menu
-    def CloseContextMenu(event):
-        global context_menu
-        if context_menu is not None:
-            context_menu.destroy()
-            context_menu = None
-    app.bind("<Button-1>", CloseContextMenu)
-
-
 def RefreshTable(documents=None) -> None:
     if documents == None:
         documents = list(collection.find())
@@ -205,7 +132,96 @@ def RefreshTable(documents=None) -> None:
     except Exception as e:
         print("Error: ", e)
 
-def OpenAddDataWindow() -> None:
+notificate_msg_height = 0
+
+def Notificate(msg: str) -> None:
+    global notificate_msg
+
+    notificate_msg = CTkFrame(app, fg_color=lighter_grey_, corner_radius=8)
+
+    label = CTkLabel(master=notificate_msg, text=msg, text_color=text_color)
+    label.grid(padx=10, pady=10)
+
+    x = app.winfo_width() / 2 - 100
+    y = app.winfo_height() - 100
+
+
+    notificate_msg.place(x=x, y=y)
+    notificate_msg.after(3000, notificate_msg.destroy)
+
+
+context_menu = None
+context_menu_height = 0
+def ShowContextMenu(event, data) -> None:
+    global context_menu
+    
+    if context_menu is not None:
+        context_menu.destroy()
+
+    # Tạo menu tùy chỉnh
+    context_menu = CTkFrame(app, corner_radius=8, fg_color=lighter_grey_, width=120)
+
+    # Lấy vị trí
+    x = event.x_root - app.winfo_x()
+    y = event.y_root - app.winfo_y()
+
+    width_limit = app.winfo_x() + app.winfo_width()
+    height_limit = app.winfo_y() + app.winfo_height()
+
+    if event.x_root > width_limit - 120:
+        x = app.winfo_width() - 120
+    if event.y_root > height_limit - 80:
+        y = app.winfo_height() - 80
+
+    def Animation():
+        global context_menu_height
+        context_menu.configure(height=context_menu_height)
+        context_menu.place(x=x, y=y + (30 - context_menu_height/2))
+
+        if context_menu_height < 68:
+            context_menu_height += 5
+            app.after(10, Animation)
+        else:
+            context_menu_height = 0
+
+    Animation()
+
+    # Nút Chỉnh sửa
+    edit_button = CTkButton(
+        master=context_menu,
+        text="Chỉnh sửa",
+        command=lambda: [EditDataWindow(data), context_menu.destroy()],
+        fg_color="transparent",
+        hover_color=grey_,
+        text_color=text_color,
+        corner_radius=8,
+        width=100
+    )
+    edit_button.place(x=10, y=5)
+
+    # Nút Xóa
+    delete_button = CTkButton(
+        master=context_menu,
+        text="Xóa",
+        command=lambda: [DeleteDataWindow(data), context_menu.destroy()],
+        fg_color="transparent",
+        hover_color=grey_,
+        text_color=text_color,
+        corner_radius=8,
+        width=100
+    )
+    delete_button.place(x=10, y=35)
+
+    # Hàm đóng menu
+    def CloseContextMenu(event):
+        global context_menu
+        if context_menu is not None:
+            context_menu.destroy()
+            context_menu = None
+    app.bind("<Button-1>", CloseContextMenu)
+
+
+def AddDataWindow() -> None:
     global add_window
     
     gender_=StringVar()
@@ -315,7 +331,7 @@ def OpenAddDataWindow() -> None:
     error_label.grid(row=12, column=1, padx=0, pady=0)
 
 # Hàm mở cửa sổ chỉnh sửa dữ liệu
-def OpenEditDataWindow(data) -> None:
+def EditDataWindow(data) -> None:
     global edit_window
     
     gender_=StringVar()
@@ -383,7 +399,7 @@ def OpenEditDataWindow(data) -> None:
                 document = list(collection.find())
                 RefreshTable(document)
 
-                Notificate("Dữ liệu đã được cập nhật ✅")
+                app.after(500, lambda: Notificate("Dữ liệu đã được cập nhật ✅"))
                 edit_window.destroy()
 
             except Exception as e:
@@ -430,7 +446,7 @@ def OpenEditDataWindow(data) -> None:
     error_label = CTkLabel(master=edit_window, text="", text_color="red")
     error_label.grid(row=12, column=1, columnspan=2)
 
-def OpenDeleteDataWindow(data) -> None:
+def DeleteDataWindow(data) -> None:
     global delete_window
     # Kiểm tra nếu cửa sổ con đã mở thì không tạo thêm
     if delete_window and delete_window.winfo_exists():
@@ -459,7 +475,7 @@ def OpenDeleteDataWindow(data) -> None:
     cancel_button = CTkButton(master=delete_window, text="Hủy", command=delete_window.destroy)
     cancel_button.grid(row=2, column=1, padx=10, pady=10, sticky="w")
 
-def OpenSortDataWindow():
+def SortDataWindow() -> None:
     global sort_window
     if sort_window and sort_window.winfo_exists():
         sort_window.focus()
@@ -469,7 +485,7 @@ def OpenSortDataWindow():
     sort_window.title("Sắp xếp")
     sort_window.geometry("350x130+660+400")
     sort_window.attributes('-topmost', True)
-    
+
     display_value = {
         "MSSV": "mssv",
         "Họ đệm": "hodem",
@@ -509,7 +525,7 @@ def OpenSortDataWindow():
 
 search_result=[]
 debounce_id = None
-def OpenSearchDataWindow() -> None:
+def SearchDataWindow() -> None:
     global search_window
     if search_window and search_window.winfo_exists():
         search_window.focus()
@@ -542,7 +558,7 @@ def OpenSearchDataWindow() -> None:
 
     # Hàm tìm kiếm dữ liệu
 
-    def SearchData(event=None):
+    def SearchData(event=None) -> None:
         search_data = Search(entry, match_case, match_whole_word)
         pipeline, temp, fields = search_data[0], search_data[1], search_data[2]
 
@@ -577,9 +593,9 @@ def OpenSearchDataWindow() -> None:
     match_whole_word_check.configure(command=UpdateSearch)
 
 buttons_data = [
-    {"image_path": r"template/add_student.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)}, 
-    {"image_path": r"template/sort.png", "command": OpenSortDataWindow, "x": 75, "size": (20, 20)},
-    {"image_path": r"template/search.png", "command": OpenSearchDataWindow, "x": 130, "size": (20, 20)},
+    {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20)}, 
+    {"image_path": r"template/sort.png", "command": SortDataWindow, "x": 75, "size": (20, 20)},
+    {"image_path": r"template/search.png", "command": SearchDataWindow, "x": 130, "size": (20, 20)},
     {"image_path": r"template/refresh.png", "command": lambda: RefreshTable(documents=list(collection.find())), "x": 185, "size": (20, 20)},
 ] # Độ phân giải của ảnh là 512x512 
 
