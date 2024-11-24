@@ -17,8 +17,11 @@ app.minsize(1300, 500)
 app.after(1, MaximizeWindow)
 
 # Table of content
-table_frame = CTkScrollableFrame(master=app)
-table_frame.pack(expand=True, pady=(80, 20), padx=20, fill="both")
+header_frame = CTkFrame(master=app, height=30)
+header_frame.pack(expand=True, pady=(80, 0), padx=20, fill="both")
+
+table_frame = CTkScrollableFrame(master=app, height=1000)
+table_frame.pack(expand=True, pady=(0, 20), padx=20, fill="both")
 
 
 add_window = None
@@ -36,16 +39,21 @@ gender_.set("Nam")
 
 def PrintTitle() -> None:
     headers: list = [
-        ("MSSV", 1, 100), ("Họ đệm", 2, 180), ("Tên", 3, 80), ("Giới tính", 4, 90), 
-        ("Lớp", 5, 90), ("Ngày sinh", 6, 120), ("Email", 7, 240), ("Số TC đã có", 8, 100), 
-        ("Tổng học phí", 9, 180), ("Học phí đã đóng", 10, 180), ("Còn nợ", 11, 180), ("Ghi chú", 12, 290)
+        ("MSSV", 0, 100), ("Họ đệm", 1, 180), ("Tên", 2, 85), ("Giới tính", 3, 90), 
+        ("Lớp", 4, 90), ("Ngày sinh", 5, 120), ("Email", 6, 240), ("Số TC đã có", 7, 100), 
+        ("Tổng học phí", 8, 180), ("Học phí đã đóng", 9, 180), ("Còn nợ", 10, 180), ("Ghi chú", 11, 290)
     ]
     for text, column, width in headers:
         header = CTkLabel(
-            master=table_frame, text=text, width=width, height=30, 
+            master=header_frame, text=text, width=width, height=30, 
             fg_color="grey", text_color="black", corner_radius=5, font=("Arial", 13, "bold")
         )
-        header.grid(row=0, column=column, padx=1, pady=1, sticky="nsew")
+        if text == "MSSV":
+            header.grid(row=0, column=column, padx=(5,1), pady=0, sticky="nsew")
+        elif text == "Ghi chú":
+            header.grid(row=0, column=column, padx=1, pady=0, sticky="nsew")
+        else:
+            header.grid(row=0, column=column, padx=1, pady=0, sticky="nsew")
 
 def SelectRow(row) -> None:
     global selected_row
@@ -67,30 +75,33 @@ selected_row = None
 def PrintElement(data, row, highlight_list) -> None:
     global selected_row
     fields = [
-        ("mssv", 1, 100), ("hodem", 2, 180), ("name", 3, 80), ("gender", 4, 90), 
-        ("class", 5, 90), ("birth", 6, 120), ("email", 7, 240), ("owned_cert", 8, 100), 
-        ("tuition", 9, 180), ("payed", 10, 180), ("debt", 11, 180), ("note", 12, 290)
+        ("mssv", 0, 98), ("hodem", 1, 180), ("name", 2, 84), ("gender", 3, 94), 
+        ("class", 4, 90), ("birth", 5, 118), ("email", 6, 240), ("owned_cert", 7, 104), 
+        ("tuition", 8, 180), ("payed", 9, 180), ("debt", 10, 180), ("note", 11, 284)
     ]
+    frame_bg = "teal" if selected_row == row else "transparent"
+    row_frame = CTkFrame(
+        master=table_frame,
+        fg_color=frame_bg,
+    )
+    row_frame.grid(row=row, padx=0, pady=0, sticky="nsew")
+    
     for field, column, width in fields:
         label_text = str(data.get(field, ""))
         if field in ["tuition", "payed", "debt"]:
             label_text += " VNĐ"
 
-        frame_bg = "teal" if selected_row == row else "transparent"
-        if field in highlight_list:
-            row_frame = CTkFrame(master=table_frame, width=width, height=30, fg_color="#FA8072")
-        else:
-            row_frame = CTkFrame(master=table_frame, width=width, height=30, fg_color=frame_bg)
-        #Căn chỉnh frame nền row được chọn không bị thừa ở 2 bên
-        if field == "mssv":  
-            row_frame.grid(row=row, column=column, padx=(2,1), pady=1, sticky="ew")
-        elif field == "note":
-            row_frame.grid(row=row, column=column, padx=(1,2), pady=1, sticky="ew")
-        else:
-            row_frame.grid(row=row, column=column, padx=1, pady=1, sticky="ew")
+        label_bg = "#FA8072" if field in highlight_list else frame_bg
 
-        label = CTkLabel(master=row_frame, text=label_text, width=width, height=30)
-        label.place(relx=0.5, rely=0.5, anchor="center")
+        label = CTkLabel(
+            master=row_frame,
+            text=label_text,
+            width=width,
+            height=30,
+            fg_color=label_bg
+        )
+        label.grid(row=0, column=column, padx=1, pady=1, sticky="nsew")
+        row_frame.columnconfigure(column, weight=1)
 
         label.bind("<Button-3>", lambda e, d=data, r=row: ShowContextMenu(e, d))
         label.bind("<Button-1>", lambda e, r=row: SelectRow(r))
