@@ -20,7 +20,8 @@ grey_ = "#313338"
 lighter_grey_ = "#3f4248"
 text_color = "#c3c6ca"
 text_color_onClick = "#f5f4e7"
-
+darker_grey_ = "#1e1f22"
+red_ = "#da373c"
 # Table of content
 header_frame = CTkFrame(master=app, height=30, fg_color=lighter_grey_)
 header_frame.pack(expand=True, pady=(80, 0), padx=20, fill="both")
@@ -95,7 +96,7 @@ def PrintElement(data, row, highlight_list) -> None:
         if field in ["tuition", "payed", "debt"]:
             label_text += " VNĐ"
 
-        label_bg = lighter_grey_ if field in highlight_list else "transparent"
+        label_bg = darker_grey_ if field in highlight_list else "transparent"
 
         label = CTkLabel(
             master=row_frame,
@@ -326,7 +327,7 @@ def AddDataWindow() -> None:
     cancel_button = CTkButton(master=add_window, text="Xong", command=add_window.destroy)
     cancel_button.grid(row=11, column=3, padx=5, pady=10)
 
-    error_label = CTkLabel(master=add_window, text="", text_color="red")
+    error_label = CTkLabel(master=add_window, text="", text_color=red_)
     error_label.grid(row=12, column=1, padx=0, pady=0)
 
 # Hàm mở cửa sổ chỉnh sửa dữ liệu
@@ -442,7 +443,7 @@ def EditDataWindow(data) -> None:
     cancel_button = CTkButton(master=edit_window, text="Xong", command=edit_window.destroy)
     cancel_button.grid(row=11, column=3, padx=5, pady=10)
 
-    error_label = CTkLabel(master=edit_window, text="", text_color="red")
+    error_label = CTkLabel(master=edit_window, text="", text_color=red_)
     error_label.grid(row=12, column=1, columnspan=2)
 
 def DeleteDataWindow(data) -> None:
@@ -580,6 +581,7 @@ def SearchDataWindow() -> None:
             app.after_cancel(debounce_id)
         debounce_id = app.after(400, SearchData)
 
+
     # Gắn sự kiện tìm kiếm khi người dùng gõ vào ô nhập
     entry.bind("<KeyRelease>", SearchDataDebounced)
 
@@ -587,10 +589,15 @@ def SearchDataWindow() -> None:
     def UpdateSearch():
         SearchData()
 
+    def ResetSearchResult():
+        global search_result
+        search_result = []
+        
     # Khi thay đổi giá trị của checkbox
     match_case_check.configure(command=UpdateSearch)
     match_whole_word_check.configure(command=UpdateSearch)
 
+    search_window.protocol('WM_DELETE_WINDOW', lambda: (ResetSearchResult(), RefreshTable(), search_window.destroy()))
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20)}, 
     {"image_path": r"template/sort.png", "command": SortDataWindow, "x": 75, "size": (20, 20)},
