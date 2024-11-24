@@ -468,6 +468,8 @@ def OpenSortDataWindow():
     sort_window = CTkToplevel(app, fg_color=grey_)
     sort_window.title("Sắp xếp")
     sort_window.geometry("350x130+660+400")
+    sort_window.attributes('-topmost', True)
+    
     display_value = {
         "MSSV": "mssv",
         "Họ đệm": "hodem",
