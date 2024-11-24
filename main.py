@@ -23,8 +23,11 @@ text_color = "#c3c6ca"
 text_color_onClick = "#f5f4e7"
 
 # Table of content
-table_frame = CTkScrollableFrame(master=app, fg_color=grey_)
-table_frame.pack(expand=True, pady=(80, 20), padx=20, fill="both")
+header_frame = CTkFrame(master=app, height=30, fg_color=lighter_grey_)
+header_frame.pack(expand=True, pady=(80, 0), padx=20, fill="both")
+
+table_frame = CTkScrollableFrame(master=app, height=1000, fg_color=grey_)
+table_frame.pack(expand=True, pady=(0, 20), padx=20, fill="both")
 
 
 add_window = None
@@ -41,16 +44,21 @@ sort_option.set("Ascending Sort")
 
 def PrintTitle() -> None:
     headers: list = [
-        ("MSSV", 1, 100), ("Họ đệm", 2, 180), ("Tên", 3, 80), ("Giới tính", 4, 90), 
-        ("Lớp", 5, 90), ("Ngày sinh", 6, 120), ("Email", 7, 240), ("Số TC đã có", 8, 100), 
-        ("Tổng học phí", 9, 180), ("Học phí đã đóng", 10, 180), ("Còn nợ", 11, 180), ("Ghi chú", 12, 290)
+        ("MSSV", 0, 100), ("Họ đệm", 1, 180), ("Tên", 2, 85), ("Giới tính", 3, 90), 
+        ("Lớp", 4, 90), ("Ngày sinh", 5, 120), ("Email", 6, 240), ("Số TC đã có", 7, 100), 
+        ("Tổng học phí", 8, 180), ("Học phí đã đóng", 9, 180), ("Còn nợ", 10, 180), ("Ghi chú", 11, 290)
     ]
     for text, column, width in headers:
         header = CTkLabel(
-            master=table_frame, text=text, width=width, height=30, 
-            fg_color="grey", text_color="black", corner_radius=5, font=("Arial", 15, "bold")
+            master=header_frame, text=text, width=width, height=30, 
+            font=("Arial", 15, "bold")
         )
-        header.grid(row=0, column=column, padx=1, pady=1, sticky="nsew")
+        if text == "MSSV":
+            header.grid(row=0, column=column, padx=(5,1), pady=0, sticky="nsew")
+        elif text == "Ghi chú":
+            header.grid(row=0, column=column, padx=1, pady=0, sticky="nsew")
+        else:
+            header.grid(row=0, column=column, padx=1, pady=0, sticky="nsew")
 
 def SelectRow(row) -> None:
     global selected_row
@@ -72,30 +80,34 @@ selected_row = None
 def PrintElement(data, row, highlight_list) -> None:
     global selected_row
     fields = [
-        ("mssv", 1, 100), ("hodem", 2, 180), ("name", 3, 80), ("gender", 4, 90), 
-        ("class", 5, 90), ("birth", 6, 120), ("email", 7, 240), ("owned_cert", 8, 100), 
-        ("tuition", 9, 180), ("payed", 10, 180), ("debt", 11, 180), ("note", 12, 290)
+        ("mssv", 0, 98), ("hodem", 1, 180), ("name", 2, 84), ("gender", 3, 94), 
+        ("class", 4, 90), ("birth", 5, 118), ("email", 6, 240), ("owned_cert", 7, 104), 
+        ("tuition", 8, 180), ("payed", 9, 180), ("debt", 10, 180), ("note", 11, 284)
     ]
+    frame_bg = lighter_grey_ if selected_row == row else "transparent"
+    row_frame = CTkFrame(
+        master=table_frame,
+        fg_color=frame_bg,
+    )
+    row_frame.grid(row=row, padx=0, pady=0, sticky="nsew")
+    
     for field, column, width in fields:
         label_text = str(data.get(field, ""))
         if field in ["tuition", "payed", "debt"]:
             label_text += " VNĐ"
 
-        frame_bg = lighter_grey_ if selected_row == row else "transparent"
-        if field in highlight_list:
-            row_frame = CTkFrame(master=table_frame, width=width, height=35, fg_color=grey_)
-        else:
-            row_frame = CTkFrame(master=table_frame, width=width, height=35, fg_color=frame_bg)
-        #Căn chỉnh frame nền row được chọn không bị thừa ở 2 bên
-        if field == "mssv":  
-            row_frame.grid(row=row, column=column, padx=(2,1), pady=1, sticky="ew")
-        elif field == "note":
-            row_frame.grid(row=row, column=column, padx=(1,2), pady=1, sticky="ew")
-        else:
-            row_frame.grid(row=row, column=column, padx=1, pady=1, sticky="ew")
+        label_bg = lighter_grey_ if field in highlight_list else "transparent"
 
-        label = CTkLabel(master=row_frame, text=label_text, width=width, height=30, text_color=text_color, font=("Arial", 13))
-        label.place(relx=0.5, rely=0.5, anchor="center")
+        label = CTkLabel(
+            master=row_frame,
+            text=label_text,
+            width=width,
+            height=35,
+            fg_color=label_bg,
+            text_color=text_color
+        )
+        label.grid(row=0, column=column, padx=1, pady=1, sticky="nsew")
+        row_frame.columnconfigure(column, weight=1)
 
         label.bind("<Button-3>", lambda e, d=data, r=row: ShowContextMenu(e, d))
         label.bind("<Button-1>", lambda e, r=row: SelectRow(r))
@@ -107,7 +119,7 @@ def Notificate(msg: str) -> None:
     global notificate_msg
 
     # Tạo menu tùy chỉnh
-    notificate_msg = CTkFrame(app, fg_color=lighter_grey_, corner_radius=1)
+    notificate_msg = CTkFrame(app, fg_color=lighter_grey_, corner_radius=8)
     notificate_msg.place(x=app.winfo_width() / 2 - 100, y=app.winfo_height() - 100)
 
     label = CTkLabel(master=notificate_msg, text=msg, text_color=text_color)
@@ -125,7 +137,7 @@ def ShowContextMenu(event, data) -> None:
         context_menu.destroy()
 
     # Tạo menu tùy chỉnh
-    context_menu = CTkFrame(app, corner_radius=1, fg_color=lighter_grey_, border_color=grey_)
+    context_menu = CTkFrame(app, corner_radius=8, fg_color=lighter_grey_)
 
     # Lấy vị trí
     x = event.x_root - app.winfo_x()
@@ -290,7 +302,7 @@ def OpenAddDataWindow() -> None:
     label.grid(row=3,column=0, pady = 5, padx = 5)
 
     gender_combobox = CTkComboBox(master=add_window, values=list(gender_display.keys()), variable=gender_)
-    gender_combobox.grid(row=3,column=1)
+    gender_combobox.grid(row=3,column=1,)
 
 
     add_button = CTkButton(master=add_window, text="Thêm", command=AddData)
@@ -456,7 +468,6 @@ def OpenSortDataWindow():
     sort_window = CTkToplevel(app, fg_color=grey_)
     sort_window.title("Sắp xếp")
     sort_window.geometry("350x130+660+400")
-    sort_window.grab_set()
     display_value = {
         "MSSV": "mssv",
         "Họ đệm": "hodem",
@@ -495,6 +506,7 @@ def OpenSortDataWindow():
     cancel_button.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
 search_result=[]
+debounce_id = None
 def OpenSearchDataWindow() -> None:
     global search_window
     if search_window and search_window.winfo_exists():
@@ -505,7 +517,7 @@ def OpenSearchDataWindow() -> None:
     search_window = CTkToplevel(app, fg_color=grey_)
     search_window.title("Tìm kiếm")
     search_window.geometry("550x130+660+400")
-    search_window.grab_set()
+    search_window.attributes('-topmost', True)
 
     # Label và Entry cho từ khóa
     label = CTkLabel(master=search_window, text="Nhập từ khóa cần tìm:", text_color=text_color)
@@ -545,9 +557,14 @@ def OpenSearchDataWindow() -> None:
                         ftemp.append(field)
                 search_result.append(ftemp)
         RefreshTable(documents)
+    def SearchDataDebounced(event=None):
+        global debounce_id
+        if debounce_id is not None:
+            app.after_cancel(debounce_id)
+        debounce_id = app.after(400, SearchData)
 
     # Gắn sự kiện tìm kiếm khi người dùng gõ vào ô nhập
-    entry.bind("<KeyRelease>", SearchData)
+    entry.bind("<KeyRelease>", SearchDataDebounced)
 
     # Gắn sự kiện để tìm kiếm khi thay đổi giá trị checkbox
     def UpdateSearch():
@@ -556,9 +573,6 @@ def OpenSearchDataWindow() -> None:
     # Khi thay đổi giá trị của checkbox
     match_case_check.configure(command=UpdateSearch)
     match_whole_word_check.configure(command=UpdateSearch)
-
-    # Thực hiện tìm kiếm ngay khi mở cửa sổ
-    SearchData()
 
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": OpenAddDataWindow, "x": 20, "size": (20, 20)}, 
