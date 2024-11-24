@@ -131,7 +131,7 @@ def RefreshTable(documents=None) -> None:
         print("Error: ", e)
 
 notificate_queue = 0
-notificate_msg = [None] * 10
+notificate_msg = [None] * 3
 
 def Notificate(msg: str) -> None:
     global notificate_msg, notificate_queue
