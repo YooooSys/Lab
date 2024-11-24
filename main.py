@@ -2,7 +2,6 @@ from customtkinter import *
 import customtkinter
 from database import collection, log_collection, ValueValidality, DataCorrector, Log, CopyDataFieldNo_ID, Search
 from tkinter import *
-import threading
 
 # Giao diện CustomTkinter
 customtkinter.set_appearance_mode("dark")
@@ -317,8 +316,8 @@ def AddDataWindow() -> None:
     label = CTkLabel(master=add_window,text="Giới tính:")
     label.grid(row=3,column=0, pady = 5, padx = 5)
 
-    gender_combobox = CTkComboBox(master=add_window, values=list(gender_display.keys()), variable=gender_)
-    gender_combobox.grid(row=3,column=1,)
+    gender_combobox = CTkComboBox(master=add_window, values=list(gender_display.keys()), variable=gender_,width=200)
+    gender_combobox.grid(row=3,column=1)
 
 
     add_button = CTkButton(master=add_window, text="Thêm", command=AddData)
@@ -433,7 +432,7 @@ def EditDataWindow(data) -> None:
     label = CTkLabel(master=edit_window,text="Giới tính:")
     label.grid(row=3,column=0, pady = 5, padx = 5)
 
-    gender_combobox = CTkComboBox(master=edit_window, values=list(gender_display.keys()), variable=gender_)
+    gender_combobox = CTkComboBox(master=edit_window, values=list(gender_display.keys()), variable=gender_, width=200)
     gender_combobox.grid(row=3,column=1)
 
     # Nút chức năng
