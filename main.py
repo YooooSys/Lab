@@ -2,7 +2,6 @@ from customtkinter import *
 import customtkinter
 from database import collection, log_collection, ValueValidality, DataCorrector, Log, CopyDataFieldNo_ID, Search
 from tkinter import *
-import threading
 
 # Giao diện CustomTkinter
 customtkinter.set_appearance_mode("dark")
