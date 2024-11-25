@@ -613,30 +613,27 @@ def OptionsWindow() -> None:
     if options_window and options_window.winfo_exists():
         options_window.focus()
         return
-    
+
     # Tạo cửa sổ mới
     options_window = CTkToplevel(app, fg_color=grey_)
     options_window.title("Tùy chọn")
     options_window.geometry("200x100+660+400")
     options_window.attributes('-topmost', True)
 
-    # Biến trạng thái cho chế độ sáng/tối
-    dark_mode = BooleanVar(value=True)
-    
-    # Tạo nút chuyển đổi chế độ sáng/tối
+    dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "dark")
+
     def theme_change():
-        if dark_mode.get():
+        # Lấy trạng thái từ biến và thay đổi chế độ
+        if dark_mode_var.get():
             customtkinter.set_appearance_mode("dark")
         else:
             customtkinter.set_appearance_mode("light")
 
     dark_mode_check = CTkSwitch(
         master=options_window,
-        text="Chế độ sáng/tối",
-        variable=dark_mode,
-        text_color=text_color,
+        text="Chế độ sáng/tối (Chưa xong)",
+        variable=dark_mode_var,  # Sử dụng biến trạng thái
         command=theme_change,
-        anchor = "w",
     )
     dark_mode_check.grid(row=0, column=0, pady=5, padx=10)
 
