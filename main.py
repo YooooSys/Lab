@@ -35,6 +35,7 @@ edit_window = None
 delete_window = None
 sort_window = None
 search_window = None
+options_window = None
 
 sort_column = StringVar() 
 sort_column.set("MSSV")
@@ -671,11 +672,42 @@ def SearchDataWindow() -> None:
     match_whole_word_check.configure(command=UpdateSearch)
 
     search_window.protocol('WM_DELETE_WINDOW', lambda: (ResetSearchResult(), RefreshTable(), search_window.destroy()))
+
+def OptionsWindow() -> None:
+    global options_window
+    if options_window and options_window.winfo_exists():
+        options_window.focus()
+        return
+
+    # Tạo cửa sổ mới
+    options_window = CTkToplevel(app, fg_color=grey_)
+    options_window.title("Tùy chọn")
+    options_window.geometry("200x100+660+400")
+    options_window.attributes('-topmost', True)
+
+    dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "dark")
+
+    def theme_change():
+        # Lấy trạng thái từ biến và thay đổi chế độ
+        if dark_mode_var.get():
+            customtkinter.set_appearance_mode("dark")
+        else:
+            customtkinter.set_appearance_mode("light")
+
+    dark_mode_check = CTkSwitch(
+        master=options_window,
+        text="Chế độ sáng/tối (Chưa xong)",
+        variable=dark_mode_var,  # Sử dụng biến trạng thái
+        command=theme_change,
+    )
+    dark_mode_check.grid(row=0, column=0, pady=5, padx=10)
+
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20)}, 
     {"image_path": r"template/sort.png", "command": SortDataWindow, "x": 75, "size": (20, 20)},
     {"image_path": r"template/search.png", "command": SearchDataWindow, "x": 130, "size": (20, 20)},
     {"image_path": r"template/refresh.png", "command": lambda: RefreshTable(documents=list(collection.find())), "x": 185, "size": (20, 20)},
+    {"image_path": r"template/option.png", "command": OptionsWindow, "x": 240, "size": (20, 20)},
 ] # Độ phân giải của ảnh là 512x512 
 
 for button in buttons_data:
