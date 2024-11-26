@@ -30,6 +30,7 @@ class Theme:
         self.dark_color = "#1e1f22" if theme == "Dark" else "#e3e5e8"
         self.text_color = "#c3c6ca" if theme == "Dark" else "#57595d"
         self.red = "#da373c"
+        self.blue = "#5865f2"
 
 # Table of content
 header_frame = CTkFrame(master=app, height=30, fg_color=Theme().light_color)
@@ -691,6 +692,62 @@ def OptionsWindow() -> None:
     options_window.title("Tùy chọn")
     options_window.geometry("250x100+660+400")
     options_window.attributes('-topmost', True)
+
+    def Refresh():
+        global theme
+        with open("option_properties.json", "w", encoding="utf-8") as file:
+            json.dump(option_, file, indent=4, ensure_ascii=False)
+        
+        theme = option_["theme"]
+        
+        header_frame.configure(fg_color=Theme().light_color)
+        table_frame.configure(fg_color=Theme().default_color)
+        notificate_frame.configure(fg_color=Theme().default_color)
+        options_window.configure(fg_color=Theme().default_color)
+
+        RefreshTable()
+        LoadButtons()
+
+    def theme_change_button(button):
+        #Refresh all Object
+        if option_["theme"] == "Light" and button == "Dark":
+            customtkinter.set_appearance_mode("Dark")
+            option_["theme"] = "Dark"
+
+            dark_button.configure(border_width=2)
+            light_button.configure(border_width=0)
+            Refresh()
+
+        elif option_["theme"] == "Dark" and button == "Light":
+            customtkinter.set_appearance_mode("Light")
+            option_["theme"] = "Light"
+
+            dark_button.configure(border_width=0)
+            light_button.configure(border_width=2)
+            Refresh()
+
+    dark_button = CTkButton(master=options_window,
+                            text="",
+                            width=30,
+                            hover_color="#313338",
+                            fg_color="#313338", 
+                            corner_radius=20, 
+                            border_width=2 if option_["theme"] == "Dark" else 0,
+                            border_color=Theme().blue,
+                            command=lambda: theme_change_button("Dark"))
+
+    light_button = CTkButton(master=options_window, 
+                             text="",
+                             width=30,
+                             hover_color="#f0f0f0",
+                            fg_color="#f0f0f0", 
+                            corner_radius=20,
+                            border_width=2 if option_["theme"] == "Light" else 0,
+                            border_color=Theme().blue,
+                            command=lambda: theme_change_button("Light"))
+    
+    # light_button.grid(row=0, column=1, pady=5, padx=5)
+    # dark_button.grid(row=0, column=2, pady=5, padx=5)
 
     dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "Dark")
 
