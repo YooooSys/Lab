@@ -704,7 +704,7 @@ def OptionsWindow() -> None:
         table_frame.configure(fg_color=Theme().default_color)
         notificate_frame.configure(fg_color=Theme().default_color)
         options_window.configure(fg_color=Theme().default_color)
-
+        label.configure(text_color=Theme().text_color)
         RefreshTable()
         LoadButtons()
 
@@ -752,7 +752,6 @@ def OptionsWindow() -> None:
     dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "Dark")
 
     def theme_change():
-        global theme
         # Lấy trạng thái từ biến và thay đổi chế độ
         if dark_mode_var.get():
             customtkinter.set_appearance_mode("Dark")
@@ -764,16 +763,9 @@ def OptionsWindow() -> None:
         with open("option_properties.json", "w", encoding="utf-8") as file:
             json.dump(option_, file, indent=4, ensure_ascii=False)
         
-        theme = option_["theme"]
-        #Refresh all Object
-        header_frame.configure(fg_color=Theme().light_color)
-        table_frame.configure(fg_color=Theme().default_color)
-        notificate_frame.configure(fg_color=Theme().default_color)
-        RefreshTable()
-        LoadButtons()
-        options_window.configure(fg_color=Theme().default_color)
+        Refresh()
 
-    label = CTkLabel(master=options_window, text = "Chế độ sáng/tối:")
+    label = CTkLabel(master=options_window, text = "Chế độ sáng/tối:", text_color=Theme().text_color)
     label.grid(row=0, column=0, padx= (10,3), pady=5)
 
     dark_mode_check = CTkSwitch(
