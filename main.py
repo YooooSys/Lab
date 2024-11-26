@@ -4,7 +4,9 @@ from database import collection, log_collection, ValueValidality, DataCorrector,
 from tkinter import *
 
 # Giao diện CustomTkinter
-customtkinter.set_appearance_mode("dark")
+theme = "dark"
+
+customtkinter.set_appearance_mode(theme)
 app = CTk()
 app.geometry("1920x1080")
 app.title("Quản lý sinh viên")
@@ -16,17 +18,21 @@ app.minsize(1300, 500)
 app.after(1, MaximizeWindow)
 
 # Color
-grey_ = "#313338"
-lighter_grey_ = "#3f4248"
-text_color = "#c3c6ca"
-text_color_onClick = "#f5f4e7"
-darker_grey_ = "#1e1f22"
-red_ = "#da373c"
+
+class Theme:
+    def __init__(self) -> None:
+        global theme
+        self.default_color = "#313338" if theme == "dark" else "#f0f0f0"
+        self.light_color = "#3f4248" if theme == "dark" else "#ffffff"
+        self.dark_color = "#1e1f22" if theme == "dark" else "#a4a4a4"
+        self.text_color = "#c3c6ca" if theme == "dark" else "#57595d"
+        self.red = "#da373c"
+
 # Table of content
-header_frame = CTkFrame(master=app, height=30, fg_color=lighter_grey_)
+header_frame = CTkFrame(master=app, height=30, fg_color=Theme().light_color)
 header_frame.pack(expand=True, pady=(80, 0), padx=20, fill="both")
 
-table_frame = CTkScrollableFrame(master=app, height=1000, fg_color=grey_)
+table_frame = CTkScrollableFrame(master=app, height=1000, fg_color=Theme().default_color)
 table_frame.pack(expand=True, pady=(0, 20), padx=20, fill="both")
 
 
@@ -75,7 +81,7 @@ def UpdateRowColors() -> None:
         if isinstance(widget, CTkFrame) and 'row' in widget.grid_info():
             row = int(widget.grid_info()['row'])
             if row % 2 == 1:
-                widget.configure(fg_color=lighter_grey_ if selected_row == row else "transparent")
+                widget.configure(fg_color=Theme().light_color if selected_row == row else "transparent")
 selected_row = None
         
 def PrintElement(data, row, highlight_list) -> None:
@@ -85,7 +91,7 @@ def PrintElement(data, row, highlight_list) -> None:
         ("class", 4, 90), ("birth", 5, 118), ("email", 6, 240), ("owned_cert", 7, 104), 
         ("tuition", 8, 180), ("payed", 9, 180), ("debt", 10, 180), ("note", 11, 284)
     ]
-    frame_bg = lighter_grey_ if selected_row == row else "transparent"
+    frame_bg = Theme().light_color if selected_row == row else "transparent"
     row_frame = CTkFrame(
         master=table_frame,
         fg_color=frame_bg,
@@ -97,7 +103,7 @@ def PrintElement(data, row, highlight_list) -> None:
         if field in ["tuition", "payed", "debt"]:
             label_text += " VNĐ"
 
-        label_bg = darker_grey_ if field in highlight_list else "transparent"
+        label_bg = Theme().dark_color if field in highlight_list else "transparent"
 
         label = CTkLabel(
             master=row_frame,
@@ -105,7 +111,7 @@ def PrintElement(data, row, highlight_list) -> None:
             width=width,
             height=35,
             fg_color=label_bg,
-            text_color=text_color
+            text_color=Theme().text_color
         )
         label.grid(row=0, column=column, padx=1, pady=1, sticky="nsew")
         row_frame.columnconfigure(column, weight=1)
@@ -132,20 +138,20 @@ def RefreshTable(documents=None) -> None:
         print("Error: ", e)
 
 notificate_msg_queue = []
-notificate_frame = CTkFrame(master=app, height=0, width=300, fg_color=grey_, corner_radius=0)
+notificate_frame = CTkFrame(master=app, height=0, width=300, fg_color=Theme().default_color, corner_radius=0)
 
 class Animation:
     def __init__(self,mode: int = 1, Obj: str="notify", end_pos: int=0, start_pos: int=0, y: int = 0, x: int = 0, speed: int = 10, target_width: int=0) -> None:
         self.mode = mode # mode == 1 then Expand, else Collapse
         self.Obj = Obj # 
         self.end_pos = end_pos
-        self.start_pos = start_pos #start_pos > end_pos for Expand_left func
+        self.start_pos = start_pos #start_pos > end_pos for Expand_right func
         self.y = y
         self.x = x
         self.speed = speed # the more larger the more slower
         self.target_width = target_width
 
-    def Expand_left(self):
+    def Expand_right(self):
         if self.Obj == "notify":
             global notificate_msg_queue
             queue = notificate_msg_queue
@@ -166,7 +172,7 @@ class Animation:
                                                     start_pos=self.start_pos, 
                                                     y=self.y, 
                                                     speed=self.speed, 
-                                                    target_width=self.target_width).Expand_left())
+                                                    target_width=self.target_width).Expand_right())
         elif self.mode != 1: 
             queue.pop(0)
             if queue == []:
@@ -192,7 +198,7 @@ def NotificateDestroy():
 
     notificate_msg:NotificateMsg = notificate_msg_queue[0]
 
-    Animation(mode=0, Obj="notify", end_pos=10,start_pos=notificate_msg.target_width + 10, speed=10, y=notificate_msg.y, target_width=0).Expand_left()
+    Animation(mode=0, Obj="notify", end_pos=10,start_pos=notificate_msg.target_width + 10, speed=10, y=notificate_msg.y, target_width=0).Expand_right()
 
 
 
@@ -208,10 +214,10 @@ def Notificate(msg: str) -> None:
     notificate_frame.place(x=app.winfo_width() - 360, y=app.winfo_height() - notificate_frame.winfo_height() - 120)
     notificate_frame.configure(height=space_between + notificate_frame.winfo_height() + notificate_msg_height)
     
-    notificate_msg_frame = CTkFrame(master=notificate_frame, fg_color=lighter_grey_, corner_radius=8,height=notificate_msg_height, width = 0)
+    notificate_msg_frame = CTkFrame(master=notificate_frame, fg_color=Theme().light_color, corner_radius=8,height=notificate_msg_height, width = 0)
     notificate_msg_frame.place(x=10,y=y)
 
-    label = CTkLabel(master=notificate_msg_frame, text=msg, text_color=text_color)
+    label = CTkLabel(master=notificate_msg_frame, text=msg, text_color=Theme().text_color)
     label.place(x=15, y=15)
     notificate_msg_queue.append(NotificateMsg(notificate_msg_frame, 0, notificate_frame.winfo_height()))
 
@@ -220,7 +226,7 @@ def Notificate(msg: str) -> None:
               start_pos=notificate_msg_target_width + 10, 
               y=notificate_frame.winfo_height(), 
               speed=speed,
-              target_width=notificate_msg_target_width).Expand_left()
+              target_width=notificate_msg_target_width).Expand_right()
     app.after(5000, NotificateDestroy)
 
 context_menu = None
@@ -232,7 +238,7 @@ def ShowContextMenu(event, data) -> None:
         context_menu.destroy()
 
     # Tạo menu tùy chỉnh
-    context_menu = CTkFrame(app, corner_radius=8, fg_color=lighter_grey_, width=120)
+    context_menu = CTkFrame(app, corner_radius=8, fg_color=Theme().light_color, width=120)
 
     # Lấy vị trí
     x = event.x_root - app.winfo_x()
@@ -265,8 +271,8 @@ def ShowContextMenu(event, data) -> None:
         text="Chỉnh sửa",
         command=lambda: [EditDataWindow(data), context_menu.destroy()],
         fg_color="transparent",
-        hover_color=grey_,
-        text_color=text_color,
+        hover_color=Theme().default_color,
+        text_color=Theme().text_color,
         corner_radius=8,
         width=100
     )
@@ -278,8 +284,8 @@ def ShowContextMenu(event, data) -> None:
         text="Xóa",
         command=lambda: [DeleteDataWindow(data), context_menu.destroy()],
         fg_color="transparent",
-        hover_color=grey_,
-        text_color=text_color,
+        hover_color=Theme().default_color,
+        text_color=Theme().text_color,
         corner_radius=8,
         width=100
     )
@@ -304,7 +310,7 @@ def AddDataWindow() -> None:
         add_window.focus()
         return
 
-    add_window = CTkToplevel(app, fg_color=grey_)
+    add_window = CTkToplevel(app, fg_color=Theme().default_color)
     add_window.title("Thêm dữ liệu")
     add_window.geometry("700x310+660+400")
     add_window.maxsize(700, 310)
@@ -365,7 +371,7 @@ def AddDataWindow() -> None:
             error_label.configure(text=f"Lỗi: {e}")
 
     def CreateEntry(label_text, row, column):
-        label = CTkLabel(master=add_window, text=label_text, text_color=text_color)
+        label = CTkLabel(master=add_window, text=label_text, text_color=Theme().text_color)
         label.grid(row=row, column=column, padx=(20, 5), pady=5)
         entry = CTkEntry(master=add_window, width=200)
         entry.grid(row=row, column=column + 1, padx=5, pady=5)
@@ -400,7 +406,7 @@ def AddDataWindow() -> None:
     cancel_button = CTkButton(master=add_window, text="Xong", command=add_window.destroy)
     cancel_button.grid(row=11, column=3, padx=5, pady=10)
 
-    error_label = CTkLabel(master=add_window, text="", text_color=red_)
+    error_label = CTkLabel(master=add_window, text="", text_color=Theme().red)
     error_label.grid(row=12, column=1, padx=0, pady=0)
 
 # Hàm mở cửa sổ chỉnh sửa dữ liệu
@@ -414,7 +420,7 @@ def EditDataWindow(data) -> None:
         edit_window.focus()
         return
 
-    edit_window = CTkToplevel(app, fg_color=grey_)
+    edit_window = CTkToplevel(app, fg_color=Theme().default_color)
     edit_window.title("Chỉnh sửa dữ liệu")
     edit_window.geometry("700x310+660+400")
     edit_window.maxsize(700, 310)
@@ -480,7 +486,7 @@ def EditDataWindow(data) -> None:
         else:
             error_label.configure(text="")
     def CreateEntry(label_text, initial_value, row, column):
-        label = CTkLabel(master=edit_window, text=label_text, text_color=text_color)
+        label = CTkLabel(master=edit_window, text=label_text,text_color=Theme().text_color)
         label.grid(row=row, column=column, padx=(20, 5), pady=5)
         entry = CTkEntry(master=edit_window, width=200)
         entry.insert(0, initial_value)
@@ -517,7 +523,7 @@ def EditDataWindow(data) -> None:
     cancel_button = CTkButton(master=edit_window, text="Xong", command=edit_window.destroy)
     cancel_button.grid(row=11, column=3, padx=5, pady=10)
 
-    error_label = CTkLabel(master=edit_window, text="", text_color=red_)
+    error_label = CTkLabel(master=edit_window, text="", text_color=Theme().red)
     error_label.grid(row=12, column=1, columnspan=2)
 
 def DeleteDataWindow(data) -> None:
@@ -527,7 +533,7 @@ def DeleteDataWindow(data) -> None:
         delete_window.focus()
         return
 
-    delete_window = CTkToplevel(app, fg_color=grey_)
+    delete_window = CTkToplevel(app, fg_color=Theme().default_color)
     delete_window.title("Xóa dữ liệu")
     delete_window.geometry("400x100+660+400")
     delete_window.attributes('-topmost', True)
@@ -540,7 +546,7 @@ def DeleteDataWindow(data) -> None:
 
         Notificate("Xóa dữ liệu thành công ✅")
 
-    label = CTkLabel(master=delete_window,text= "Bạn có chắc chắn muốn xóa người này?", anchor="center", text_color=text_color)
+    label = CTkLabel(master=delete_window,text= "Bạn có chắc chắn muốn xóa người này?", anchor="center", text_color=Theme().text_color)
     label.grid(row=1,column=0, pady = 5, padx = 10)
 
     confirm_button = CTkButton(master=delete_window, text="OK", command=DeleteData)
@@ -555,7 +561,7 @@ def SortDataWindow() -> None:
         sort_window.focus()
         return
     
-    sort_window = CTkToplevel(app, fg_color=grey_)
+    sort_window = CTkToplevel(app, fg_color=Theme().default_color)
     sort_window.title("Sắp xếp")
     sort_window.geometry("350x130+660+400")
     sort_window.attributes('-topmost', True)
@@ -578,12 +584,12 @@ def SortDataWindow() -> None:
         "Ascending Sort": 1,
         "Descending Sort": -1
     }
-    label = CTkLabel(master=sort_window,text="Chọn thuộc tính cần sắp xếp", text_color=text_color)
+    label = CTkLabel(master=sort_window,text="Chọn thuộc tính cần sắp xếp", text_color=Theme().text_color)
     label.grid(row=1,column=0, pady = 5, padx = 10)
-    sort_column_combobox = CTkComboBox(master=sort_window, values=list(display_value.keys()), variable=sort_column, text_color=text_color)
+    sort_column_combobox = CTkComboBox(master=sort_window, values=list(display_value.keys()), variable=sort_column, text_color=Theme().text_color)
     sort_column_combobox.grid(row=2,column=0, pady = 5, padx = 10)
 
-    sort_option_combobox = CTkComboBox(master=sort_window, values=list(sort_option_display.keys()), variable=sort_option, text_color=text_color)
+    sort_option_combobox = CTkComboBox(master=sort_window, values=list(sort_option_display.keys()), variable=sort_option, text_color=Theme().text_color)
     sort_option_combobox.grid(row=2,column=1, pady = 5, padx = 10)
 
     def sort_database() -> None:
@@ -606,13 +612,13 @@ def SearchDataWindow() -> None:
         return
 
     # Tạo cửa sổ tìm kiếm
-    search_window = CTkToplevel(app, fg_color=grey_)
+    search_window = CTkToplevel(app, fg_color=Theme().default_color)
     search_window.title("Tìm kiếm")
     search_window.geometry("550x130+660+400")
     search_window.attributes('-topmost', True)
 
     # Label và Entry cho từ khóa
-    label = CTkLabel(master=search_window, text="Nhập từ khóa cần tìm:", text_color=text_color)
+    label = CTkLabel(master=search_window, text="Nhập từ khóa cần tìm:", text_color=Theme().text_color)
     label.grid(row=0, column=0, pady=5, padx=10)
 
     entry = CTkEntry(master=search_window, width=240)
@@ -620,11 +626,11 @@ def SearchDataWindow() -> None:
 
     # Các checkbox tùy chọn tìm kiếm
     match_case = BooleanVar()
-    match_case_check = CTkCheckBox(master=search_window, text="Match Case", variable=match_case, text_color=text_color)
+    match_case_check = CTkCheckBox(master=search_window, text="Match Case", variable=match_case, text_color=Theme().text_color)
     match_case_check.grid(row=1, column=1, pady=5, padx=(20, 5))
 
     match_whole_word = BooleanVar()
-    match_whole_word_check = CTkCheckBox(master=search_window, text="Match Whole Word", variable=match_whole_word, text_color=text_color)
+    match_whole_word_check = CTkCheckBox(master=search_window, text="Match Whole Word", variable=match_whole_word,text_color=Theme().text_color)
     match_whole_word_check.grid(row=1, column=2, pady=5, padx=5)
 
     # Tạo chỉ mục văn bản toàn bộ (chỉ cần làm một lần duy nhất)
@@ -680,7 +686,7 @@ def OptionsWindow() -> None:
         return
 
     # Tạo cửa sổ mới
-    options_window = CTkToplevel(app, fg_color=grey_)
+    options_window = CTkToplevel(app, fg_color=Theme().default_color)
     options_window.title("Tùy chọn")
     options_window.geometry("200x100+660+400")
     options_window.attributes('-topmost', True)
@@ -688,11 +694,21 @@ def OptionsWindow() -> None:
     dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "dark")
 
     def theme_change():
+        global theme
         # Lấy trạng thái từ biến và thay đổi chế độ
         if dark_mode_var.get():
             customtkinter.set_appearance_mode("dark")
+            theme = "dark"
         else:
             customtkinter.set_appearance_mode("light")
+            theme = "light"
+
+        #Refresh all Object
+        header_frame.configure(fg_color=Theme().light_color)
+        table_frame.configure(fg_color=Theme().default_color)
+        notificate_frame.configure(fg_color=Theme().default_color)
+        RefreshTable()
+        LoadButtons()
 
     dark_mode_check = CTkSwitch(
         master=options_window,
@@ -710,19 +726,21 @@ buttons_data = [
     {"image_path": r"template/option.png", "command": OptionsWindow, "x": 240, "size": (20, 20)},
 ] # Độ phân giải của ảnh là 512x512 
 
-for button in buttons_data:
-    image = PhotoImage(file=button["image_path"]).subsample(*button["size"])
-    CTkButton(
-        master=app,
-        text="",
-        image=image,
-        command=button["command"],
-        width=50,
-        height=50,
-        fg_color="transparent",
-        hover_color=grey_,
-    ).place(x=button["x"], y=18)
+def LoadButtons():
+    for button in buttons_data:
+        image = PhotoImage(file=button["image_path"]).subsample(*button["size"])
+        CTkButton(
+            master=app,
+            text="",
+            image=image,
+            command=button["command"],
+            width=50,
+            height=50,
+            fg_color="transparent",
+            hover_color=Theme().light_color,
+        ).place(x=button["x"], y=18)
 
+LoadButtons()
 # Hiển thị tiêu đề và dữ liệu ban đầu
 PrintTitle()
 RefreshTable()
