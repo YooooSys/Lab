@@ -633,11 +633,9 @@ def SearchDataWindow() -> None:
     match_whole_word_check = CTkCheckBox(master=search_window, text="Match Whole Word", variable=match_whole_word,text_color=Theme().text_color)
     match_whole_word_check.grid(row=1, column=2, pady=5, padx=5)
 
-    # Tạo chỉ mục văn bản toàn bộ (chỉ cần làm một lần duy nhất)
     collection.create_index([("$**", "text")])
 
     # Hàm tìm kiếm dữ liệu
-
     def SearchData(event=None) -> None:
         search_data = Search(entry, match_case, match_whole_word)
         pipeline, temp, fields = search_data[0], search_data[1], search_data[2]
@@ -688,7 +686,7 @@ def OptionsWindow() -> None:
     # Tạo cửa sổ mới
     options_window = CTkToplevel(app, fg_color=Theme().default_color)
     options_window.title("Tùy chọn")
-    options_window.geometry("200x100+660+400")
+    options_window.geometry("250x100+660+400")
     options_window.attributes('-topmost', True)
 
     dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "dark")
@@ -710,13 +708,16 @@ def OptionsWindow() -> None:
         RefreshTable()
         LoadButtons()
 
+    label = CTkLabel(master=options_window, text = "Chế độ sáng/tối (Chưa xong):")
+    label.grid(row=0, column=0, padx= (10,3), pady=5)
+
     dark_mode_check = CTkSwitch(
         master=options_window,
-        text="Chế độ sáng/tối (Chưa xong)",
-        variable=dark_mode_var,  # Sử dụng biến trạng thái
+        variable=dark_mode_var,
+        text="",
         command=theme_change,
     )
-    dark_mode_check.grid(row=0, column=0, pady=5, padx=10)
+    dark_mode_check.grid(row=0, column=1, pady=5, padx=5)
 
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20)}, 
