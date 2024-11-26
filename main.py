@@ -24,7 +24,7 @@ class Theme:
         global theme
         self.default_color = "#313338" if theme == "dark" else "#f0f0f0"
         self.light_color = "#3f4248" if theme == "dark" else "#ffffff"
-        self.dark_color = "#1e1f22" if theme == "dark" else "#a4a4a4"
+        self.dark_color = "#1e1f22" if theme == "dark" else "#e3e5e8"
         self.text_color = "#c3c6ca" if theme == "dark" else "#57595d"
         self.red = "#da373c"
 
