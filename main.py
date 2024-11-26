@@ -130,32 +130,97 @@ def RefreshTable(documents=None) -> None:
     except Exception as e:
         print("Error: ", e)
 
-notificate_queue = 0
-notificate_msg = [None] * 3
+notificate_msg_queue = []
+notificate_frame = CTkFrame(master=app, height=0, width=300, fg_color=grey_, corner_radius=0)
+
+class Animation:
+    def __init__(self,mode: int = 1, Obj: str="notify", end_pos: int=0, start_pos: int=0, y: int = 0, x: int = 0, speed: int = 10, target_width: int=0) -> None:
+        self.mode = mode # mode == 1 then Expand, else Collapse
+        self.Obj = Obj # 
+        self.end_pos = end_pos
+        self.start_pos = start_pos #start_pos > end_pos for Expand_left func
+        self.y = y
+        self.x = x
+        self.speed = speed # the more larger the more slower
+        self.target_width = target_width
+
+    def Expand_left(self):
+        if self.Obj == "notify":
+            global notificate_msg_queue
+            queue = notificate_msg_queue
+
+        frame = queue[-1 if self.mode == 1 else 0]
+        real_width = frame.real_width
+        frame.frame.place(x = self.end_pos + self.start_pos - real_width, y = self.y)
+        frame.frame.configure(width=real_width)
+
+        condition = (real_width < self.target_width) if self.mode == 1 else (real_width > 0)
+
+        if condition:
+            if self.Obj == "notify":
+                queue[-1 if self.mode == 1 else 0].real_width += 10 if self.mode == 1 else -10
+
+            app.after(self.speed, lambda: Animation(mode=self.mode,
+                                                    Obj=self.Obj, 
+                                                    start_pos=self.start_pos, 
+                                                    y=self.y, 
+                                                    speed=self.speed, 
+                                                    target_width=self.target_width).Expand_left())
+        elif self.mode != 1: 
+            queue.pop(0)
+            if queue == []:
+                if self.Obj == "notify":
+                    notificate_frame.configure(height=0)
+                    notificate_frame.place(x=app.winfo_width(), y=app.winfo_height())
+
+class NotificateMsg:
+    def __init__(self, 
+                notificate_msg = None, 
+                notificate_msg_real_width = None,
+                notificate_msg_y = None, 
+                notificate_msg_target_width = 260) -> None:
+        
+        self.frame = notificate_msg
+        self.real_width = notificate_msg_real_width
+        self.target_width = notificate_msg_target_width
+        self.y = notificate_msg_y
+    
+    
+def NotificateDestroy():
+    global notificate_frame, notificate_msg_queue
+
+    notificate_msg:NotificateMsg = notificate_msg_queue[0]
+
+    Animation(mode=0, Obj="notify", end_pos=10,start_pos=notificate_msg.target_width + 10, speed=10, y=notificate_msg.y, target_width=0).Expand_left()
+
+
 
 def Notificate(msg: str) -> None:
-    global notificate_msg, notificate_queue
+    global notificate_msg_queue, notificate_frame
 
-    pos = notificate_queue
-    notificate_msg[notificate_queue] = CTkFrame(app, fg_color=lighter_grey_, corner_radius=8,)
+    notificate_msg_target_width = NotificateMsg().target_width
+    notificate_msg_height = 60
+    y = 10 + notificate_frame.winfo_height() - notificate_msg_height
+    space_between = 10
+    speed = 10
 
-    label = CTkLabel(master=notificate_msg[notificate_queue], text=msg, text_color=text_color, anchor="center")
-    label.grid(padx=10, pady=10)
+    notificate_frame.place(x=app.winfo_width() - 360, y=app.winfo_height() - notificate_frame.winfo_height() - 120)
+    notificate_frame.configure(height=space_between + notificate_frame.winfo_height() + notificate_msg_height)
+    
+    notificate_msg_frame = CTkFrame(master=notificate_frame, fg_color=lighter_grey_, corner_radius=8,height=notificate_msg_height, width = 0)
+    notificate_msg_frame.place(x=10,y=y)
 
-    x = app.winfo_width() / 2 - 100
-    y = app.winfo_height() - 100
+    label = CTkLabel(master=notificate_msg_frame, text=msg, text_color=text_color)
+    label.place(x=15, y=15)
+    notificate_msg_queue.append(NotificateMsg(notificate_msg_frame, 0, notificate_frame.winfo_height()))
 
-
-    notificate_msg[notificate_queue].place(x=x, y=y - 60 * notificate_queue)
-    notificate_queue += 1
-
-    def DestroyNotificate():
-        global notificate_queue
-        notificate_msg[pos].destroy()
-        notificate_queue -= 1
-
-    app.after(3000, lambda: DestroyNotificate())
-
+    Animation(Obj="notify", 
+              end_pos=10, 
+              start_pos=notificate_msg_target_width + 10, 
+              y=notificate_frame.winfo_height(), 
+              speed=speed,
+              target_width=notificate_msg_target_width).Expand_left()
+    app.after(5000, NotificateDestroy)
 
 context_menu = None
 context_menu_height = 0
