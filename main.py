@@ -2,10 +2,14 @@ from customtkinter import *
 import customtkinter
 from database import collection, log_collection, ValueValidality, DataCorrector, Log, CopyDataFieldNo_ID, Search
 from tkinter import *
+import json
+
+#JSON file
+with open("option_properties.json","r", encoding="utf-8") as file:
+    option_ = json.load(file)
 
 # Giao diện CustomTkinter
-theme = "dark"
-
+theme = option_["theme"]
 customtkinter.set_appearance_mode(theme)
 app = CTk()
 app.geometry("1920x1080")
@@ -18,14 +22,13 @@ app.minsize(1300, 500)
 app.after(1, MaximizeWindow)
 
 # Color
-
 class Theme:
     def __init__(self) -> None:
         global theme
-        self.default_color = "#313338" if theme == "dark" else "#f0f0f0"
-        self.light_color = "#3f4248" if theme == "dark" else "#ffffff"
-        self.dark_color = "#1e1f22" if theme == "dark" else "#e3e5e8"
-        self.text_color = "#c3c6ca" if theme == "dark" else "#57595d"
+        self.default_color = "#313338" if theme == "Dark" else "#f0f0f0"
+        self.light_color = "#3f4248" if theme == "Dark" else "#ffffff"
+        self.dark_color = "#1e1f22" if theme == "Dark" else "#e3e5e8"
+        self.text_color = "#c3c6ca" if theme == "Dark" else "#57595d"
         self.red = "#da373c"
 
 # Table of content
@@ -689,26 +692,31 @@ def OptionsWindow() -> None:
     options_window.geometry("250x100+660+400")
     options_window.attributes('-topmost', True)
 
-    dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "dark")
+    dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "Dark")
 
     def theme_change():
         global theme
         # Lấy trạng thái từ biến và thay đổi chế độ
         if dark_mode_var.get():
-            customtkinter.set_appearance_mode("dark")
-            theme = "dark"
+            customtkinter.set_appearance_mode("Dark")
+            option_["theme"] = "Dark"
         else:
-            customtkinter.set_appearance_mode("light")
-            theme = "light"
+            customtkinter.set_appearance_mode("Light")
+            option_["theme"] = "Light"
 
+        with open("option_properties.json", "w", encoding="utf-8") as file:
+            json.dump(option_, file, indent=4, ensure_ascii=False)
+        
+        theme = option_["theme"]
         #Refresh all Object
         header_frame.configure(fg_color=Theme().light_color)
         table_frame.configure(fg_color=Theme().default_color)
         notificate_frame.configure(fg_color=Theme().default_color)
         RefreshTable()
         LoadButtons()
+        options_window.configure(fg_color=Theme().default_color)
 
-    label = CTkLabel(master=options_window, text = "Chế độ sáng/tối (Chưa xong):")
+    label = CTkLabel(master=options_window, text = "Chế độ sáng/tối:")
     label.grid(row=0, column=0, padx= (10,3), pady=5)
 
     dark_mode_check = CTkSwitch(
