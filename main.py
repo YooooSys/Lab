@@ -765,7 +765,7 @@ def OptionsWindow() -> None:
         
         Refresh()
 
-    label = CTkLabel(master=options_window, text = "Chế độ sáng/tối:", text_color=Theme().text_color)
+    label = CTkLabel(master=options_window, text = "Chế độ sáng/tối:", text_color=Theme().text_color, font=("Arial", 13, "bold"))
     label.grid(row=0, column=0, padx= (10,3), pady=5)
 
     dark_mode_check = CTkSwitch(
@@ -773,8 +773,16 @@ def OptionsWindow() -> None:
         variable=dark_mode_var,
         text="",
         command=theme_change,
+        switch_height= 25,
+        switch_width=50,
+        border_width=2,
+        border_color="darkblue",
+        fg_color="#313338",
+        progress_color= "#f0f0f0",
+        button_color= "grey",
+        button_hover_color= "#A9A9A9"
     )
-    dark_mode_check.grid(row=0, column=1, pady=5, padx=5)
+    dark_mode_check.grid(row=0, column=1, pady=5, padx=10)
 
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20)}, 
