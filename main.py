@@ -754,13 +754,31 @@ def OptionsWindow() -> None:
 
     # Create switch for dark mode
     dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "Dark")
+
+    def theme_change():
+        # Lấy trạng thái từ biến và thay đổi chế độ
+        if dark_mode_var.get():
+            customtkinter.set_appearance_mode("Dark")
+            option_["theme"] = "Dark"
+        else:
+            customtkinter.set_appearance_mode("Light")
+            option_["theme"] = "Light"
+
+        with open("option_properties.json", "w", encoding="utf-8") as file:
+            json.dump(option_, file, indent=4, ensure_ascii=False)
+        
+        Refresh()
+
+    label = CTkLabel(master=options_window, text = "Chế độ sáng/tối:", text_color=Theme().text_color)
+    label.grid(row=0, column=0, padx= (10,3), pady=5)
+
     dark_mode_check = CTkSwitch(
         master=options_window,
         variable=dark_mode_var,
         text="",
-        command=lambda: apply_theme("Dark" if dark_mode_var.get() else "Light")
+        command=theme_change,
     )
-    dark_mode_check.grid(row=0, column=1, pady=5, padx=5)
+    dark_mode_check.grid(row=0, column=1, pady=5, padx=10)
 
     # Export to Excel functionality
     def export_to_excel():
