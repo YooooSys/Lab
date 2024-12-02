@@ -1,14 +1,12 @@
 import pandas as pd
-from tkinter import simpledialog
-from pymongo import MongoClient
-import datetime
-import certifi
 from customtkinter import *
 import customtkinter
 from database import collection, log_collection, ValueValidality, DataCorrector, Log, CopyDataFieldNo_ID, Search
 from tkinter import *
 import json
-import openpyxl
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment
 
 #JSON file
 with open("option_properties.json","r", encoding="utf-8") as file:
@@ -215,29 +213,35 @@ def NotificateDestroy():
 def Notificate(msg: str) -> None:
     global notificate_msg_queue, notificate_frame
 
-    notificate_msg_target_width = NotificateMsg().target_width
+    notificate_msg_target_width = 260
     notificate_msg_height = 60
     y = 10 + notificate_frame.winfo_height() - notificate_msg_height
     space_between = 10
     speed = 10
 
+    dynamic_width = max(notificate_msg_target_width, 20 + len(msg) * 10)
+
     notificate_frame.place(x=app.winfo_width() - 360, y=app.winfo_height() - notificate_frame.winfo_height() - 120)
     notificate_frame.configure(height=space_between + notificate_frame.winfo_height() + notificate_msg_height)
     
-    notificate_msg_frame = CTkFrame(master=notificate_frame, fg_color=Theme().light_color, corner_radius=8,height=notificate_msg_height, width = 0)
-    notificate_msg_frame.place(x=10,y=y)
+    notificate_msg_frame = CTkFrame(master=notificate_frame, fg_color=Theme().light_color, corner_radius=8, height=notificate_msg_height, width=0)
+    notificate_msg_frame.place(x=10, y=y)
 
     label = CTkLabel(master=notificate_msg_frame, text=msg, text_color=Theme().text_color)
     label.place(x=15, y=15)
+
     notificate_msg_queue.append(NotificateMsg(notificate_msg_frame, 0, notificate_frame.winfo_height()))
 
     Animation(Obj="notify", 
               end_pos=10, 
-              start_pos=notificate_msg_target_width + 10, 
+              start_pos=dynamic_width + 10, 
               y=notificate_frame.winfo_height(), 
               speed=speed,
-              target_width=notificate_msg_target_width).Expand_right()
+              target_width=dynamic_width).Expand_right()
+    
+    # Sau 5 giây, tự động đóng thông báo
     app.after(5000, NotificateDestroy)
+
 
 context_menu = None
 context_menu_height = 0
@@ -748,11 +752,9 @@ def OptionsWindow() -> None:
         command=lambda: theme_change_button("Light")
     )
 
-    # Create label for theme switching
     label = CTkLabel(master=options_window, text="Chế độ sáng/tối:", text_color=Theme().text_color)
     label.grid(row=0, column=0, padx=(10, 3), pady=5)
 
-    # Create switch for dark mode
     dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "Dark")
 
     def theme_change():
@@ -766,8 +768,6 @@ def OptionsWindow() -> None:
 
         with open("option_properties.json", "w", encoding="utf-8") as file:
             json.dump(option_, file, indent=4, ensure_ascii=False)
-        
-        Refresh()
 
     label = CTkLabel(master=options_window, text = "Chế độ sáng/tối:", text_color=Theme().text_color)
     label.grid(row=0, column=0, padx= (10,3), pady=5)
@@ -780,102 +780,127 @@ def OptionsWindow() -> None:
     )
     dark_mode_check.grid(row=0, column=1, pady=5, padx=10)
 
-    # Export to Excel functionality
-    def export_to_excel():
-        # Ask for file name input
-        file_name = simpledialog.askstring("Export", "Nhập tên file (đừng thêm đuôi .xlsx):")
-        if file_name:
-            # Create a DataFrame to export (example with option_)
-            df = pd.DataFrame([option_])  # Replace with your data
-
-            # Ask where to save the file
-            file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel Files", "*.xlsx")])
-            if file_path:
-                df.to_excel(file_path, index=False, engine='openpyxl')
-                print(f"Data exported to {file_path}")
-
-    # Import from Excel functionality
-    def import_from_excel():
-        # Ask to select a file
-        file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
-        if file_path:
-            try:
-                # Read the Excel file into a DataFrame
-                df = pd.read_excel(file_path, engine='openpyxl')
-                # Process the data (for example, update option_ or any other logic)
-                print("Data imported:", df)
-                # You can process the imported data here
-            except Exception as e:
-                print(f"Error importing file: {e}")
-
-    # Create buttons for export and import
     export_button = CTkButton(
         master=options_window,
         text="Export to Excel",
-        command=export_to_excel
+        command=ExportToExcel
     )
     export_button.grid(row=1, column=0, padx=10, pady=10)
 
     import_button = CTkButton(
         master=options_window,
         text="Import from Excel",
-        command=import_from_excel
+        command=ImportFromExcel
     )
     import_button.grid(row=2, column=0, padx=10, pady=10)
 
 def ImportFromExcel():
     file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
+    
     if file_path:
         try:
-            # Read the selected Excel file into a DataFrame
             df = pd.read_excel(file_path, engine='openpyxl')
-            print(f"Data imported successfully from {file_path}")
-            return df  # Return the DataFrame with imported data
+            Notificate(f"Data imported successfully from {file_path}")
+
+            column_mapping = {
+                "Mã số sinh viên": "mssv",
+                "Họ và đệm": "hodem",
+                "Tên": "name",
+                "Giới tính": "gender",
+                "Lớp": "class",
+                "Ngày sinh": "birth",
+                "Email": "email",
+                "Số tín chỉ đã đạt": "owned_cert",
+                "Tổng học phí": "tuition",
+                "Học phí đã đóng": "payed",
+                "Học phí còn nợ": "debt",
+                "Ghi chú": "note",
+            }
+
+            df.rename(columns=column_mapping, inplace=True)
+            
+            df.fillna("", inplace=True)
+
+            data_list = df.to_dict(orient='records')
+
+            for data in data_list:
+                if collection.find_one({"mssv": data["mssv"]}):
+                    Notificate(f"Record with mssv {data['mssv']} already exists. Skipping insertion.")
+                else:
+                    DataCorrector(data)
+                    collection.insert_one(data)
+                    Notificate(f"Record with mssv {data['mssv']} inserted into MongoDB.")
+            
         except Exception as e:
-            print(f"Error importing file: {e}")
-            return pd.DataFrame()  # Return empty DataFrame in case of error
-        
-def ExportToExcel(entry, match_case, match_whole_word):
-    # Run the aggregation pipeline to fetch the data
-    data = collection
-    # Convert the MongoDB cursor to a list of dictionaries
+            Notificate(f"Error importing or inserting data: {e}")
+
+
+def ExportToExcel():
+    data = collection.find()
     data_list = list(data)
 
-    # Create a dialog to ask for the file name
-    def on_filename_entry_submit():
-        file_name = filename_entry.get() + ".xlsx"
-        
-        if file_name:
-            # Convert to pandas DataFrame
-            df = pd.DataFrame(data_list)
+    if not data_list:
+        Notificate("No data found in the collection.")
+        return
 
-            # Ask where to save the file using filedialog
-            file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel Files", "*.xlsx")])
-            
-            if file_path:
-                try:
-                    # Export DataFrame to Excel
-                    df.to_excel(file_path, index=False, engine='openpyxl')
-                    print(f"Data exported successfully to {file_path}")
-                    print(f"hello {type(data)}")
-                except Exception as e:
-                    print(f"Error exporting data: {e}")
-            
-            export_window.quit()
+    df = pd.DataFrame(data_list)
 
-    # Create an Export dialog using CustomTkinter
-    export_window = CTkToplevel(app)
-    export_window.geometry("400x250")
-    export_window.title("Export to Excel")
+    if "_id" in df.columns:
+        df.drop(columns=["_id"], inplace=True)
+    column_mapping = {
+        "mssv": "Mã số sinh viên", 
+        "hodem": "Họ và đệm",
+        "name": "Tên",
+        "gender": "Giới tính",
+        "class": "Lớp",
+        "birth": "Ngày sinh",
+        "email": "Email",
+        "owned_cert": "Số tín chỉ đã đạt",
+        "tuition": "Tổng học phí",
+        "payed": "Học phí đã đóng",
+        "debt": "Học phí còn nợ",
+        "note": "Ghi chú",
+    }
 
-    filename_label = CTkLabel(export_window, text="Enter File Name (without .xlsx):")
-    filename_label.pack(pady=10)
+    df.rename(columns=column_mapping, inplace=True)
 
-    filename_entry = CTkEntry(export_window)
-    filename_entry.pack(pady=10)
+    file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel Files", "*.xlsx")])
 
-    submit_button = CTkButton(export_window, text="Export", command=on_filename_entry_submit)
-    submit_button.pack(pady=10)
+    if file_path:
+        try:
+            df.to_excel(file_path, index=False, engine='openpyxl')
+
+            workbook = load_workbook(file_path)
+            sheet = workbook.active
+
+            center_columns = [
+                "Mã số sinh viên", "Lớp", "Số tín chỉ đã đạt",
+                "Tổng học phí", "Học phí đã đóng", "Học phí còn nợ",
+                "Ghi chú", "Giới tính"
+            ]
+
+            for col in sheet.columns:
+                col_letter = get_column_letter(col[0].column)
+                if sheet[col_letter + "1"].value in center_columns:
+                    for cell in col:
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+            for col in sheet.columns:
+                max_length = 0
+                col_letter = get_column_letter(col[0].column)
+                for cell in col:
+                    try:
+                        if cell.value:
+                            max_length = max(max_length, len(str(cell.value)))
+                    except:
+                        pass
+                sheet.column_dimensions[col_letter].width = max_length + 2
+
+            workbook.save(file_path)
+
+            Notificate(f"Data exported successfully to {file_path}")
+        except Exception as e:
+            Notificate(f"Error exporting data: {e}")
 
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20)}, 
@@ -898,7 +923,6 @@ def LoadButtons():
             fg_color="transparent",
             hover_color=Theme().light_color,
         ).place(x=button["x"], y=18)
-
 LoadButtons()
 # Hiển thị tiêu đề và dữ liệu ban đầu
 PrintTitle()
