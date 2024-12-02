@@ -1,8 +1,14 @@
+import pandas as pd
+from tkinter import simpledialog
+from pymongo import MongoClient
+import datetime
+import certifi
 from customtkinter import *
 import customtkinter
 from database import collection, log_collection, ValueValidality, DataCorrector, Log, CopyDataFieldNo_ID, Search
 from tkinter import *
 import json
+import openpyxl
 
 #JSON file
 with open("option_properties.json","r", encoding="utf-8") as file:
@@ -690,17 +696,21 @@ def OptionsWindow() -> None:
     # Tạo cửa sổ mới
     options_window = CTkToplevel(app, fg_color=Theme().default_color)
     options_window.title("Tùy chọn")
-    options_window.geometry("250x100+660+400")
+    options_window.geometry("250x200+660+400")  # Adjusted window size
     options_window.attributes('-topmost', True)
 
-    def Refresh():
+    # Update the theme without refreshing all elements separately
+    def apply_theme(theme_name):
         global theme
+        theme = theme_name
+        customtkinter.set_appearance_mode(theme_name)
+
+        # Update theme in the settings file
         with open("option_properties.json", "w", encoding="utf-8") as file:
             json.dump(option_, file, indent=4, ensure_ascii=False)
-        
-        theme = option_["theme"]
-        
-        header_frame.configure(fg_color=Theme().light_color)
+
+        # Refresh the UI elements that depend on the theme
+        header_frame.configure(fg_color=Theme().light_color if theme_name == "Light" else Theme().dark_color)
         table_frame.configure(fg_color=Theme().default_color)
         notificate_frame.configure(fg_color=Theme().default_color)
         options_window.configure(fg_color=Theme().default_color)
@@ -708,80 +718,153 @@ def OptionsWindow() -> None:
         RefreshTable()
         LoadButtons()
 
-    def theme_change_button(button):
-        #Refresh all Object
-        if option_["theme"] == "Light" and button == "Dark":
-            customtkinter.set_appearance_mode("Dark")
-            option_["theme"] = "Dark"
+    def theme_change_button(selected_theme):
+        if option_["theme"] != selected_theme:
+            option_["theme"] = selected_theme
+            apply_theme(selected_theme)
 
-            dark_button.configure(border_width=2)
-            light_button.configure(border_width=0)
-            Refresh()
+    # Create buttons for theme switching
+    dark_button = CTkButton(
+        master=options_window,
+        text="",
+        width=30,
+        hover_color="#313338",
+        fg_color="#313338",
+        corner_radius=20,
+        border_width=2 if option_["theme"] == "Dark" else 0,
+        border_color=Theme().blue,
+        command=lambda: theme_change_button("Dark")
+    )
 
-        elif option_["theme"] == "Dark" and button == "Light":
-            customtkinter.set_appearance_mode("Light")
-            option_["theme"] = "Light"
+    light_button = CTkButton(
+        master=options_window,
+        text="",
+        width=30,
+        hover_color="#f0f0f0",
+        fg_color="#f0f0f0",
+        corner_radius=20,
+        border_width=2 if option_["theme"] == "Light" else 0,
+        border_color=Theme().blue,
+        command=lambda: theme_change_button("Light")
+    )
 
-            dark_button.configure(border_width=0)
-            light_button.configure(border_width=2)
-            Refresh()
+    # Create label for theme switching
+    label = CTkLabel(master=options_window, text="Chế độ sáng/tối:", text_color=Theme().text_color)
+    label.grid(row=0, column=0, padx=(10, 3), pady=5)
 
-    dark_button = CTkButton(master=options_window,
-                            text="",
-                            width=30,
-                            hover_color="#313338",
-                            fg_color="#313338", 
-                            corner_radius=20, 
-                            border_width=2 if option_["theme"] == "Dark" else 0,
-                            border_color=Theme().blue,
-                            command=lambda: theme_change_button("Dark"))
-
-    light_button = CTkButton(master=options_window, 
-                             text="",
-                             width=30,
-                             hover_color="#f0f0f0",
-                            fg_color="#f0f0f0", 
-                            corner_radius=20,
-                            border_width=2 if option_["theme"] == "Light" else 0,
-                            border_color=Theme().blue,
-                            command=lambda: theme_change_button("Light"))
-    
-    # light_button.grid(row=0, column=1, pady=5, padx=5)
-    # dark_button.grid(row=0, column=2, pady=5, padx=5)
-
+    # Create switch for dark mode
     dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "Dark")
-
-    def theme_change():
-        # Lấy trạng thái từ biến và thay đổi chế độ
-        if dark_mode_var.get():
-            customtkinter.set_appearance_mode("Dark")
-            option_["theme"] = "Dark"
-        else:
-            customtkinter.set_appearance_mode("Light")
-            option_["theme"] = "Light"
-
-        with open("option_properties.json", "w", encoding="utf-8") as file:
-            json.dump(option_, file, indent=4, ensure_ascii=False)
-        
-        Refresh()
-
-    label = CTkLabel(master=options_window, text = "Chế độ sáng/tối:", text_color=Theme().text_color)
-    label.grid(row=0, column=0, padx= (10,3), pady=5)
-
     dark_mode_check = CTkSwitch(
         master=options_window,
         variable=dark_mode_var,
         text="",
-        command=theme_change,
+        command=lambda: apply_theme("Dark" if dark_mode_var.get() else "Light")
     )
     dark_mode_check.grid(row=0, column=1, pady=5, padx=5)
+
+    # Export to Excel functionality
+    def export_to_excel():
+        # Ask for file name input
+        file_name = simpledialog.askstring("Export", "Nhập tên file (đừng thêm đuôi .xlsx):")
+        if file_name:
+            # Create a DataFrame to export (example with option_)
+            df = pd.DataFrame([option_])  # Replace with your data
+
+            # Ask where to save the file
+            file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel Files", "*.xlsx")])
+            if file_path:
+                df.to_excel(file_path, index=False, engine='openpyxl')
+                print(f"Data exported to {file_path}")
+
+    # Import from Excel functionality
+    def import_from_excel():
+        # Ask to select a file
+        file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
+        if file_path:
+            try:
+                # Read the Excel file into a DataFrame
+                df = pd.read_excel(file_path, engine='openpyxl')
+                # Process the data (for example, update option_ or any other logic)
+                print("Data imported:", df)
+                # You can process the imported data here
+            except Exception as e:
+                print(f"Error importing file: {e}")
+
+    # Create buttons for export and import
+    export_button = CTkButton(
+        master=options_window,
+        text="Export to Excel",
+        command=export_to_excel
+    )
+    export_button.grid(row=1, column=0, padx=10, pady=10)
+
+    import_button = CTkButton(
+        master=options_window,
+        text="Import from Excel",
+        command=import_from_excel
+    )
+    import_button.grid(row=2, column=0, padx=10, pady=10)
+
+def ImportFromExcel():
+    file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
+    if file_path:
+        try:
+            # Read the selected Excel file into a DataFrame
+            df = pd.read_excel(file_path, engine='openpyxl')
+            print(f"Data imported successfully from {file_path}")
+            return df  # Return the DataFrame with imported data
+        except Exception as e:
+            print(f"Error importing file: {e}")
+            return pd.DataFrame()  # Return empty DataFrame in case of error
+        
+def ExportToExcel(entry, match_case, match_whole_word):
+    # Run the aggregation pipeline to fetch the data
+    data = collection
+    # Convert the MongoDB cursor to a list of dictionaries
+    data_list = list(data)
+
+    # Create a dialog to ask for the file name
+    def on_filename_entry_submit():
+        file_name = filename_entry.get() + ".xlsx"
+        
+        if file_name:
+            # Convert to pandas DataFrame
+            df = pd.DataFrame(data_list)
+
+            # Ask where to save the file using filedialog
+            file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel Files", "*.xlsx")])
+            
+            if file_path:
+                try:
+                    # Export DataFrame to Excel
+                    df.to_excel(file_path, index=False, engine='openpyxl')
+                    print(f"Data exported successfully to {file_path}")
+                    print(f"hello {type(data)}")
+                except Exception as e:
+                    print(f"Error exporting data: {e}")
+            
+            export_window.quit()
+
+    # Create an Export dialog using CustomTkinter
+    export_window = CTkToplevel(app)
+    export_window.geometry("400x250")
+    export_window.title("Export to Excel")
+
+    filename_label = CTkLabel(export_window, text="Enter File Name (without .xlsx):")
+    filename_label.pack(pady=10)
+
+    filename_entry = CTkEntry(export_window)
+    filename_entry.pack(pady=10)
+
+    submit_button = CTkButton(export_window, text="Export", command=on_filename_entry_submit)
+    submit_button.pack(pady=10)
 
 buttons_data = [
     {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20)}, 
     {"image_path": r"template/sort.png", "command": SortDataWindow, "x": 75, "size": (20, 20)},
     {"image_path": r"template/search.png", "command": SearchDataWindow, "x": 130, "size": (20, 20)},
     {"image_path": r"template/refresh.png", "command": lambda: RefreshTable(documents=list(collection.find())), "x": 185, "size": (20, 20)},
-    {"image_path": r"template/option.png", "command": OptionsWindow, "x": 240, "size": (20, 20)},
+    {"image_path": r"template/option.png", "command": OptionsWindow, "x": 250, "size": (20, 20)},
 ] # Độ phân giải của ảnh là 512x512 
 
 def LoadButtons():
