@@ -902,18 +902,50 @@ def ExportToExcel():
         except Exception as e:
             Notificate(f"Error exporting data: {e}")
 
+class CTkTooltip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip_window = None
+        self.widget.bind("<Enter>", self.show_tooltip)
+        self.widget.bind("<Leave>", self.hide_tooltip)
+
+    def show_tooltip(self, event=None):
+        if self.tooltip_window or not self.text:
+            return
+        x, y, _, _ = self.widget.bbox("insert")
+        x += self.widget.winfo_rootx() + 25
+        y += self.widget.winfo_rooty() + 20
+        self.tooltip_window = Toplevel(self.widget)
+        self.tooltip_window.wm_overrideredirect(True)
+        self.tooltip_window.wm_geometry(f"+{x}+{y}")
+        label = Label(
+            self.tooltip_window,
+            text=self.text,
+            background="yellow",
+            relief="solid",
+            borderwidth=1,
+            font=("Arial", 10, "normal")
+        )
+        label.pack(ipadx=5, ipady=3)
+
+    def hide_tooltip(self, event=None):
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
+
 buttons_data = [
-    {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20)}, 
-    {"image_path": r"template/sort.png", "command": SortDataWindow, "x": 75, "size": (20, 20)},
-    {"image_path": r"template/search.png", "command": SearchDataWindow, "x": 130, "size": (20, 20)},
-    {"image_path": r"template/refresh.png", "command": lambda: RefreshTable(documents=list(collection.find())), "x": 185, "size": (20, 20)},
-    {"image_path": r"template/option.png", "command": OptionsWindow, "x": 250, "size": (20, 20)},
-] # Độ phân giải của ảnh là 512x512 
+    {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20), "tooltip": "Thêm sinh viên mới"},
+    {"image_path": r"template/sort.png", "command": SortDataWindow, "x": 75, "size": (20, 20), "tooltip": "Sắp xếp dữ liệu"},
+    {"image_path": r"template/search.png", "command": SearchDataWindow, "x": 130, "size": (20, 20), "tooltip": "Tìm kiếm dữ liệu"},
+    {"image_path": r"template/refresh.png", "command": lambda: RefreshTable(documents=list(collection.find())), "x": 185, "size": (20, 20), "tooltip": "Làm mới bảng"},
+    {"image_path": r"template/option.png", "command": OptionsWindow, "x": 250, "size": (20, 20), "tooltip": "Tùy chọn"},
+]
 
 def LoadButtons():
     for button in buttons_data:
         image = PhotoImage(file=button["image_path"]).subsample(*button["size"])
-        CTkButton(
+        btn = CTkButton(
             master=app,
             text="",
             image=image,
@@ -922,9 +954,11 @@ def LoadButtons():
             height=50,
             fg_color="transparent",
             hover_color=Theme().light_color,
-        ).place(x=button["x"], y=18)
+        )
+        btn.place(x=button["x"], y=18)
+        CTkTooltip(btn, button["tooltip"])
+
 LoadButtons()
-# Hiển thị tiêu đề và dữ liệu ban đầu
 PrintTitle()
 RefreshTable()
 
