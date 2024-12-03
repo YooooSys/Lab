@@ -815,7 +815,7 @@ def ImportFromExcel():
                 "Học phí đã đóng": "payed",
                 "Học phí còn nợ": "debt",
                 "Ghi chú": "note",
-            }
+            } #mã hóa các title
 
             df.rename(columns=column_mapping, inplace=True)
             
@@ -860,7 +860,7 @@ def ExportToExcel():
         "payed": "Học phí đã đóng",
         "debt": "Học phí còn nợ",
         "note": "Ghi chú",
-    }
+    } #việt hóa các title
 
     df.rename(columns=column_mapping, inplace=True)
 
@@ -883,7 +883,7 @@ def ExportToExcel():
                 col_letter = get_column_letter(col[0].column)
                 if sheet[col_letter + "1"].value in center_columns:
                     for cell in col:
-                        cell.alignment = Alignment(horizontal="center", vertical="center")
+                        cell.alignment = Alignment(horizontal="center", vertical="center") #căn giữa
 
             for col in sheet.columns:
                 max_length = 0
@@ -891,7 +891,7 @@ def ExportToExcel():
                 for cell in col:
                     try:
                         if cell.value:
-                            max_length = max(max_length, len(str(cell.value)))
+                            max_length = max(max_length, len(str(cell.value))) #thay đổi kích thước cột
                     except:
                         pass
                 sheet.column_dimensions[col_letter].width = max_length + 2
@@ -902,7 +902,7 @@ def ExportToExcel():
         except Exception as e:
             Notificate(f"Error exporting data: {e}")
 
-class CTkTooltip:
+class CTkTooltip: #animation khi người dùng hover
     def __init__(self, widget, text):
         self.widget = widget
         self.text = text
@@ -910,7 +910,7 @@ class CTkTooltip:
         self.widget.bind("<Enter>", self.show_tooltip)
         self.widget.bind("<Leave>", self.hide_tooltip)
 
-    def show_tooltip(self, event=None):
+    def show_tooltip(self, event=None): #hiển thị text khi người dùng hover
         if self.tooltip_window or not self.text:
             return
         x, y, _, _ = self.widget.bbox("insert")
@@ -929,7 +929,7 @@ class CTkTooltip:
         )
         label.pack(ipadx=5, ipady=3)
 
-    def hide_tooltip(self, event=None):
+    def hide_tooltip(self, event=None): #tắt hộp thoại khi người dùng đưa con trỏ ra khỏi button
         if self.tooltip_window:
             self.tooltip_window.destroy()
             self.tooltip_window = None
