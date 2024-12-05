@@ -1,6 +1,6 @@
 from customtkinter import *
 import customtkinter
-from database import collection, log_collection, ValueValidality, DataCorrector, Log, CopyDataFieldNo_ID, Search
+from database import collection, ValueValidality, DataCorrector, Log, CopyDataFieldNo_ID, Search
 from tkinter import *
 import json
 
@@ -708,7 +708,7 @@ def OptionsWindow() -> None:
         RefreshTable()
         LoadButtons()
 
-    def theme_change_button(button):
+    def theme_change_2(button):
         #Refresh all Object
         if option_["theme"] == "Light" and button == "Dark":
             customtkinter.set_appearance_mode("Dark")
@@ -734,7 +734,7 @@ def OptionsWindow() -> None:
                             corner_radius=20, 
                             border_width=2 if option_["theme"] == "Dark" else 0,
                             border_color=Theme().blue,
-                            command=lambda: theme_change_button("Dark"))
+                            command=lambda: theme_change_2("Dark"))
 
     light_button = CTkButton(master=options_window, 
                              text="",
@@ -744,7 +744,7 @@ def OptionsWindow() -> None:
                             corner_radius=20,
                             border_width=2 if option_["theme"] == "Light" else 0,
                             border_color=Theme().blue,
-                            command=lambda: theme_change_button("Light"))
+                            command=lambda: theme_change_2("Light"))
     
     # light_button.grid(row=0, column=1, pady=5, padx=5)
     # dark_button.grid(row=0, column=2, pady=5, padx=5)
