@@ -81,7 +81,6 @@ def SelectRow(row) -> None:
         selected_row = row
         UpdateRowColors()
 
-
 def UpdateRowColors() -> None:
     global selected_row
     for widget in table_frame.winfo_children():
