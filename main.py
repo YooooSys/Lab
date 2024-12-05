@@ -1,8 +1,12 @@
+import pandas as pd
 from customtkinter import *
 import customtkinter
 from database import collection, ValueValidality, DataCorrector, Log, CopyDataFieldNo_ID, Search
 from tkinter import *
 import json
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment
 
 #JSON file
 with open("option_properties.json","r", encoding="utf-8") as file:
@@ -209,29 +213,35 @@ def NotificateDestroy():
 def Notificate(msg: str) -> None:
     global notificate_msg_queue, notificate_frame
 
-    notificate_msg_target_width = NotificateMsg().target_width
+    notificate_msg_target_width = 260
     notificate_msg_height = 60
     y = 10 + notificate_frame.winfo_height() - notificate_msg_height
     space_between = 10
     speed = 10
 
+    dynamic_width = max(notificate_msg_target_width, 20 + len(msg) * 10)
+
     notificate_frame.place(x=app.winfo_width() - 360, y=app.winfo_height() - notificate_frame.winfo_height() - 120)
     notificate_frame.configure(height=space_between + notificate_frame.winfo_height() + notificate_msg_height)
     
-    notificate_msg_frame = CTkFrame(master=notificate_frame, fg_color=Theme().light_color, corner_radius=8,height=notificate_msg_height, width = 0)
-    notificate_msg_frame.place(x=10,y=y)
+    notificate_msg_frame = CTkFrame(master=notificate_frame, fg_color=Theme().light_color, corner_radius=8, height=notificate_msg_height, width=0)
+    notificate_msg_frame.place(x=10, y=y)
 
     label = CTkLabel(master=notificate_msg_frame, text=msg, text_color=Theme().text_color)
     label.place(x=15, y=15)
+
     notificate_msg_queue.append(NotificateMsg(notificate_msg_frame, 0, notificate_frame.winfo_height()))
 
     Animation(Obj="notify", 
-              end_pos=10, 
-              start_pos=notificate_msg_target_width + 10, 
+              end_pos= 10, 
+              start_pos=dynamic_width + 10, 
               y=notificate_frame.winfo_height(), 
               speed=speed,
-              target_width=notificate_msg_target_width).Expand_right()
+              target_width=dynamic_width).Expand_right()
+    
+    # Sau 5 giây, tự động đóng thông báo
     app.after(5000, NotificateDestroy)
+
 
 context_menu = None
 context_menu_height = 0
@@ -690,16 +700,13 @@ def OptionsWindow() -> None:
     # Tạo cửa sổ mới
     options_window = CTkToplevel(app, fg_color=Theme().default_color)
     options_window.title("Tùy chọn")
-    options_window.geometry("250x100+660+400")
+    options_window.geometry("250x200+660+400")  # Adjusted window size
     options_window.attributes('-topmost', True)
 
-    def Refresh():
-        global theme
-        with open("option_properties.json", "w", encoding="utf-8") as file:
-            json.dump(option_, file, indent=4, ensure_ascii=False)
-        
-        theme = option_["theme"]
-        
+    # Update the theme without refreshing all elements separately
+    def apply_theme():
+        # Update theme in the settings file
+        # Refresh the UI elements that depend on the theme
         header_frame.configure(fg_color=Theme().light_color)
         table_frame.configure(fg_color=Theme().default_color)
         notificate_frame.configure(fg_color=Theme().default_color)
@@ -708,62 +715,23 @@ def OptionsWindow() -> None:
         RefreshTable()
         LoadButtons()
 
-    def theme_change_2(button):
-        #Refresh all Object
-        if option_["theme"] == "Light" and button == "Dark":
-            customtkinter.set_appearance_mode("Dark")
-            option_["theme"] = "Dark"
-
-            dark_button.configure(border_width=2)
-            light_button.configure(border_width=0)
-            Refresh()
-
-        elif option_["theme"] == "Dark" and button == "Light":
-            customtkinter.set_appearance_mode("Light")
-            option_["theme"] = "Light"
-
-            dark_button.configure(border_width=0)
-            light_button.configure(border_width=2)
-            Refresh()
-
-    dark_button = CTkButton(master=options_window,
-                            text="",
-                            width=30,
-                            hover_color="#313338",
-                            fg_color="#313338", 
-                            corner_radius=20, 
-                            border_width=2 if option_["theme"] == "Dark" else 0,
-                            border_color=Theme().blue,
-                            command=lambda: theme_change_2("Dark"))
-
-    light_button = CTkButton(master=options_window, 
-                             text="",
-                             width=30,
-                             hover_color="#f0f0f0",
-                            fg_color="#f0f0f0", 
-                            corner_radius=20,
-                            border_width=2 if option_["theme"] == "Light" else 0,
-                            border_color=Theme().blue,
-                            command=lambda: theme_change_2("Light"))
-    
-    # light_button.grid(row=0, column=1, pady=5, padx=5)
-    # dark_button.grid(row=0, column=2, pady=5, padx=5)
-
     dark_mode_var = BooleanVar(value=customtkinter.get_appearance_mode() == "Dark")
 
     def theme_change():
+        global theme
         # Lấy trạng thái từ biến và thay đổi chế độ
         if dark_mode_var.get():
             customtkinter.set_appearance_mode("Dark")
-            option_["theme"] = "Dark"
+            option_["theme"] = theme = "Dark"
+            
         else:
             customtkinter.set_appearance_mode("Light")
-            option_["theme"] = "Light"
+            option_["theme"] = theme = "Light"
 
         with open("option_properties.json", "w", encoding="utf-8") as file:
             json.dump(option_, file, indent=4, ensure_ascii=False)
         
-        Refresh()
+        apply_theme()
 
     label = CTkLabel(master=options_window, text = "Chế độ sáng/tối:", text_color=Theme().text_color)
     label.grid(row=0, column=0, padx= (10,3), pady=5)
@@ -774,20 +742,174 @@ def OptionsWindow() -> None:
         text="",
         command=theme_change,
     )
-    dark_mode_check.grid(row=0, column=1, pady=5, padx=5)
+    dark_mode_check.grid(row=0, column=1, pady=5, padx=10)
+
+    export_button = CTkButton(
+        master=options_window,
+        text="Export to Excel",
+        command=ExportToExcel
+    )
+    export_button.grid(row=1, column=0, padx=10, pady=10)
+
+    import_button = CTkButton(
+        master=options_window,
+        text="Import from Excel",
+        command=ImportFromExcel
+    )
+    import_button.grid(row=2, column=0, padx=10, pady=10)
+
+def ImportFromExcel():
+    file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
+    
+    if file_path:
+        try:
+            df = pd.read_excel(file_path, engine='openpyxl')
+            Notificate(f"Data imported successfully from {file_path}")
+
+            column_mapping = {
+                "Mã số sinh viên": "mssv",
+                "Họ và đệm": "hodem",
+                "Tên": "name",
+                "Giới tính": "gender",
+                "Lớp": "class",
+                "Ngày sinh": "birth",
+                "Email": "email",
+                "Số tín chỉ đã đạt": "owned_cert",
+                "Tổng học phí": "tuition",
+                "Học phí đã đóng": "payed",
+                "Học phí còn nợ": "debt",
+                "Ghi chú": "note",
+            } #mã hóa các title
+
+            df.rename(columns=column_mapping, inplace=True)
+            
+            df.fillna("", inplace=True)
+
+            data_list = df.to_dict(orient='records')
+
+            for data in data_list:
+                if collection.find_one({"mssv": data["mssv"]}):
+                    Notificate(f"Record with mssv {data['mssv']} already exists. Skipping insertion.")
+                else:
+                    DataCorrector(data)
+                    collection.insert_one(data)
+                    Notificate(f"Record with mssv {data['mssv']} inserted into MongoDB.")
+            
+        except Exception as e:
+            Notificate(f"Error importing or inserting data: {e}")
+
+
+def ExportToExcel():
+    data = collection.find()
+    data_list = list(data)
+
+    if not data_list:
+        Notificate("Không có dữ liệu!")
+        return
+
+    df = pd.DataFrame(data_list)
+
+    if "_id" in df.columns:
+        df.drop(columns=["_id"], inplace=True)
+    column_mapping = {
+        "mssv": "Mã số sinh viên", 
+        "hodem": "Họ và đệm",
+        "name": "Tên",
+        "gender": "Giới tính",
+        "class": "Lớp",
+        "birth": "Ngày sinh",
+        "email": "Email",
+        "owned_cert": "Số tín chỉ đã đạt",
+        "tuition": "Tổng học phí",
+        "payed": "Học phí đã đóng",
+        "debt": "Học phí còn nợ",
+        "note": "Ghi chú",
+    } #việt hóa các title
+
+    df.rename(columns=column_mapping, inplace=True)
+
+    file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel Files", "*.xlsx")])
+
+    if file_path:
+        try:
+            df.to_excel(file_path, index=False, engine='openpyxl')
+
+            workbook = load_workbook(file_path)
+            sheet = workbook.active
+
+            center_columns = [
+                "Mã số sinh viên", "Lớp", "Số tín chỉ đã đạt",
+                "Tổng học phí", "Học phí đã đóng", "Học phí còn nợ",
+                "Ghi chú", "Giới tính"
+            ]
+
+            for col in sheet.columns:
+                col_letter = get_column_letter(col[0].column)
+                if sheet[col_letter + "1"].value in center_columns:
+                    for cell in col:
+                        cell.alignment = Alignment(horizontal="center", vertical="center") #căn giữa
+
+            for col in sheet.columns:
+                max_length = 0
+                col_letter = get_column_letter(col[0].column)
+                for cell in col:
+                    try:
+                        if cell.value:
+                            max_length = max(max_length, len(str(cell.value))) #thay đổi kích thước cột
+                    except:
+                        pass
+                sheet.column_dimensions[col_letter].width = max_length + 2
+
+            workbook.save(file_path)
+
+            Notificate(f"Xuất file thành công!")
+        except Exception as e:
+            Notificate(f"Lỗi {e}")
+
+class CTkTooltip: #animation khi người dùng hover
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip_window = None
+        self.widget.bind("<Enter>", self.show_tooltip)
+        self.widget.bind("<Leave>", self.hide_tooltip)
+
+    def show_tooltip(self, event=None): #hiển thị text khi người dùng hover
+        if self.tooltip_window or not self.text:
+            return
+        x, y, _, _ = self.widget.bbox("insert")
+        x += self.widget.winfo_rootx() + 25
+        y += self.widget.winfo_rooty() + 20
+        self.tooltip_window = Toplevel(self.widget)
+        self.tooltip_window.wm_overrideredirect(True)
+        self.tooltip_window.wm_geometry(f"+{x}+{y}")
+        label = Label(
+            self.tooltip_window,
+            text=self.text,
+            background="yellow",
+            relief="solid",
+            borderwidth=1,
+            font=("Arial", 10, "normal")
+        )
+        label.pack(ipadx=5, ipady=3)
+
+    def hide_tooltip(self, event=None): #tắt hộp thoại khi người dùng đưa con trỏ ra khỏi button
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
 
 buttons_data = [
-    {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20)}, 
-    {"image_path": r"template/sort.png", "command": SortDataWindow, "x": 75, "size": (20, 20)},
-    {"image_path": r"template/search.png", "command": SearchDataWindow, "x": 130, "size": (20, 20)},
-    {"image_path": r"template/refresh.png", "command": lambda: RefreshTable(documents=list(collection.find())), "x": 185, "size": (20, 20)},
-    {"image_path": r"template/option.png", "command": OptionsWindow, "x": 240, "size": (20, 20)},
-] # Độ phân giải của ảnh là 512x512 
+    {"image_path": r"template/add_student.png", "command": AddDataWindow, "x": 20, "size": (20, 20), "tooltip": "Thêm sinh viên mới"},
+    {"image_path": r"template/sort.png", "command": SortDataWindow, "x": 75, "size": (20, 20), "tooltip": "Sắp xếp dữ liệu"},
+    {"image_path": r"template/search.png", "command": SearchDataWindow, "x": 130, "size": (20, 20), "tooltip": "Tìm kiếm dữ liệu"},
+    {"image_path": r"template/refresh.png", "command": lambda: RefreshTable(documents=list(collection.find())), "x": 185, "size": (20, 20), "tooltip": "Làm mới bảng"},
+    {"image_path": r"template/option.png", "command": OptionsWindow, "x": 250, "size": (20, 20), "tooltip": "Tùy chọn"},
+]
 
 def LoadButtons():
     for button in buttons_data:
         image = PhotoImage(file=button["image_path"]).subsample(*button["size"])
-        CTkButton(
+        btn = CTkButton(
             master=app,
             text="",
             image=image,
@@ -796,10 +918,11 @@ def LoadButtons():
             height=50,
             fg_color="transparent",
             hover_color=Theme().light_color,
-        ).place(x=button["x"], y=18)
+        )
+        btn.place(x=button["x"], y=18)
+        CTkTooltip(btn, button["tooltip"])
 
 LoadButtons()
-# Hiển thị tiêu đề và dữ liệu ban đầu
 PrintTitle()
 RefreshTable()
 
