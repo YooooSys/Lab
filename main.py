@@ -29,6 +29,7 @@ app.after(1, MaximizeWindow)
 class Theme:
     def __init__(self) -> None:
         global theme
+        self.transparent_color = "#00000000" if theme == "Dark" else "#ffffff00"
         self.default_color = "#313338" if theme == "Dark" else "#f0f0f0"
         self.light_color = "#3f4248" if theme == "Dark" else "#ffffff"
         self.dark_color = "#1e1f22" if theme == "Dark" else "#e3e5e8"
@@ -145,7 +146,7 @@ def RefreshTable(documents=None) -> None:
         print("Error: ", e)
 
 notificate_msg_queue = []
-notificate_frame = CTkFrame(master=app, height=0, width=300, fg_color=Theme().default_color, corner_radius=0)
+notificate_frame = CTkFrame(master=app, height=0, width=400, fg_color=Theme().default_color, corner_radius=0)
 
 class Animation:
     def __init__(self,mode: int = 1, Obj: str="notify", end_pos: int=0, start_pos: int=0, y: int = 0, x: int = 0, speed: int = 10, target_width: int=0) -> None:
@@ -192,7 +193,7 @@ class NotificateMsg:
                 notificate_msg = None, 
                 notificate_msg_real_width = None,
                 notificate_msg_y = None, 
-                notificate_msg_target_width = 260) -> None:
+                notificate_msg_target_width = 300) -> None:
         
         self.frame = notificate_msg
         self.real_width = notificate_msg_real_width
@@ -212,15 +213,15 @@ def NotificateDestroy():
 def Notificate(msg: str) -> None:
     global notificate_msg_queue, notificate_frame
 
-    notificate_msg_target_width = 260
+    notificate_msg_target_width = 20 + len(msg) * 10
     notificate_msg_height = 60
     y = 10 + notificate_frame.winfo_height() - notificate_msg_height
     space_between = 10
     speed = 10
 
-    dynamic_width = max(notificate_msg_target_width, 20 + len(msg) * 10)
+    dynamic_width = notificate_msg_target_width
 
-    notificate_frame.place(x=app.winfo_width() - 360, y=app.winfo_height() - notificate_frame.winfo_height() - 120)
+    notificate_frame.place(x=app.winfo_width() - (400 + len(msg) - 40), y=app.winfo_height() - notificate_frame.winfo_height() - 120)
     notificate_frame.configure(height=space_between + notificate_frame.winfo_height() + notificate_msg_height)
     
     notificate_msg_frame = CTkFrame(master=notificate_frame, fg_color=Theme().light_color, corner_radius=8, height=notificate_msg_height, width=0)
@@ -763,7 +764,7 @@ def ImportFromExcel():
     if file_path:
         try:
             df = pd.read_excel(file_path, engine='openpyxl')
-            Notificate(f"Data imported successfully from {file_path}")
+            Notificate(f"Data imported successfully")
 
             column_mapping = {
                 "Mã số sinh viên": "mssv",
@@ -861,7 +862,7 @@ def ExportToExcel():
 
             workbook.save(file_path)
 
-            Notificate(f"Xuất file thành công!")
+            Notificate(f"Data exported successfully")
         except Exception as e:
             Notificate(f"Lỗi {e}")
 
