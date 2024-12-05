@@ -800,7 +800,7 @@ def ImportFromExcel():
     if file_path:
         try:
             df = pd.read_excel(file_path, engine='openpyxl')
-            Notificate(f"Data imported successfully from {file_path}")
+            Notificate(f"Data imported successfully")
 
             column_mapping = {
                 "Mã số sinh viên": "mssv",
@@ -898,7 +898,7 @@ def ExportToExcel():
 
             workbook.save(file_path)
 
-            Notificate(f"Data exported successfully to {file_path}")
+            Notificate(f"Data exported successfully")
         except Exception as e:
             Notificate(f"Error exporting data: {e}")
 
