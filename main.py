@@ -146,7 +146,7 @@ def RefreshTable(documents=None) -> None:
         print("Error: ", e)
 
 notificate_msg_queue = []
-notificate_frame = CTkFrame(master=app, height=0, width=400, fg_color=Theme().default_color, corner_radius=0)
+notificate_frame = CTkFrame(master=app, height=0, width=300, fg_color=Theme().default_color, corner_radius=0)
 
 class Animation:
     def __init__(self,mode: int = 1, Obj: str="notify", end_pos: int=0, start_pos: int=0, y: int = 0, x: int = 0, speed: int = 10, target_width: int=0) -> None:
@@ -224,7 +224,7 @@ def Notificate(msg: str) -> None:
     notificate_frame.place(x=app.winfo_width() - (400 + len(msg) - 40), y=app.winfo_height() - notificate_frame.winfo_height() - 120)
     notificate_frame.configure(height=space_between + notificate_frame.winfo_height() + notificate_msg_height)
     
-    notificate_msg_frame = CTkFrame(master=notificate_frame, fg_color=Theme().light_color, corner_radius=8, height=notificate_msg_height, width=0)
+    notificate_msg_frame = CTkFrame(master=notificate_frame, fg_color=Theme().light_color, corner_radius=8, height=notificate_msg_height)
     notificate_msg_frame.place(x=10, y=y)
 
     label = CTkLabel(master=notificate_msg_frame, text=msg, text_color=Theme().text_color)
@@ -245,6 +245,7 @@ def Notificate(msg: str) -> None:
 
 context_menu = None
 context_menu_height = 0
+
 def ShowContextMenu(event, data) -> None:
     global context_menu
     
